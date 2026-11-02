@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>LegAid.Api</RootNamespace>
+    <UserSecretsId>6b3c8d29-78df-4d74-abc5-2488bf283ea4</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.8" />
+    <!-- Przypięte: AspNetCore.OpenApi 10.0.x dociąga podatne Microsoft.OpenApi 2.0.0 (GHSA-v5pm-xwqc-g5wc), poprawka w 2.7.5 -->
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.11.0" />
+    <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.11.0" />
+  </ItemGroup>
+
+</Project>

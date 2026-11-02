@@ -1,0 +1,33 @@
+using Microsoft.Extensions.AI;
+
+namespace LegAid.Api.Agents;
+
+/// <summary>
+/// Agent prawny. IChatClient (OpenAI + UseFunctionInvocation) przychodzi z DI,
+/// więc dodanie narzędzi i RAG nie wymaga zmian w rejestracji modelu.
+/// </summary>
+public sealed class LegalAgent(IChatClient chatClient, ILogger<LegalAgent> logger) : ILegalAgent
+{
+    public async Task<LegalAgentAnswer> AskAsync(string message, CancellationToken cancellationToken = default)
+    {
+        List<ChatMessage> messages =
+        [
+            new(ChatRole.System, LegalAgentPrompts.System),
+            // Później: kontekst z RAG (fragmenty przepisów) jako dodatkowa wiadomość.
+            new(ChatRole.User, message)
+        ];
+
+        // Później: Tools = [ AIFunctionFactory.Create(SearchLaw, name: "search_law", ...) ]
+        var options = new ChatOptions();
+
+        var response = await chatClient.GetResponseAsync(messages, options, cancellationToken);
+
+        logger.LogInformation(
+            "Model {Model}: {InputTokens} tokenów wejścia, {OutputTokens} tokenów wyjścia",
+            response.ModelId,
+            response.Usage?.InputTokenCount,
+            response.Usage?.OutputTokenCount);
+
+        return new LegalAgentAnswer(response.Text, response.ModelId);
+    }
+}

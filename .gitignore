@@ -1,0 +1,33 @@
+# Build
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ll]og/
+[Ll]ogs/
+TestResults/
+*.nupkg
+*.snupkg
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.DotSettings.user
+
+# Sekrety i lokalna konfiguracja (klucz OpenAI NIGDY w repo)
+.env
+.env.*
+secrets.json
+appsettings.*.local.json
+*.pfx
+*.key
+
+# System
+.DS_Store
+Thumbs.db

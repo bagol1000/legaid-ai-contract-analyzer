@@ -1,0 +1,28 @@
+@host = http://localhost:5080
+
+### Pytanie prawne
+POST {{host}}/api/agent/ask
+Content-Type: application/json
+
+{
+  "message": "Czy w umowie o pracę można zapisać, że pracownik nie ma prawa do urlopu wypoczynkowego w pierwszym roku pracy?"
+}
+
+### Fragment umowy do analizy
+POST {{host}}/api/agent/ask
+Content-Type: application/json
+
+{
+  "message": "Przeanalizuj fragment umowy najmu mieszkania (najemca jest konsumentem): § 5. Najemca zapłaci karę umowną 1000 zł za każdy dzień opóźnienia w zapłacie czynszu. § 6. Wynajmujący może wypowiedzieć umowę w każdym czasie, bez podania przyczyny i bez okresu wypowiedzenia. § 7. Kaucja nie podlega zwrotowi."
+}
+
+### Pusty tekst -> 400
+POST {{host}}/api/agent/ask
+Content-Type: application/json
+
+{
+  "message": ""
+}
+
+### Dokument OpenAPI
+GET {{host}}/openapi/v1.json
