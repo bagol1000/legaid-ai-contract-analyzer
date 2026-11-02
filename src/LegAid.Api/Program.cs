@@ -7,8 +7,12 @@ using OpenAI;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Konfiguracja OpenAI: model z appsettings.json,     
-// klucz z user-secrets (Development) albo zmiennej środowiskowej OpenAI__ApiKey.
+if (!builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddUserSecrets<Program>(optional: true);
+    builder.Configuration.AddEnvironmentVariables();
+}
+
 builder.Services.AddOptions<OpenAIOptions>()
     .Bind(builder.Configuration.GetSection(OpenAIOptions.SectionName))
     .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey),
@@ -17,8 +21,6 @@ builder.Services.AddOptions<OpenAIOptions>()
         "Brak OpenAI:Model w konfiguracji.")
     .ValidateOnStart();
 
-// Model
-// IChatClient z OpenAI + automatyczne wykonywanie narzędzi (gotowe na AIFunctionFactory).
 builder.Services
     .AddChatClient(sp =>
     {
@@ -31,7 +33,6 @@ builder.Services
     .UseFunctionInvocation()
     .UseLogging();
 
-// Agent
 builder.Services.AddScoped<ILegalAgent, LegalAgent>();
 
 builder.Services.AddOpenApi();
@@ -44,7 +45,7 @@ app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi(); // /openapi/v1.json
+    app.MapOpenApi();
 }
 
 app.MapAgentEndpoints();

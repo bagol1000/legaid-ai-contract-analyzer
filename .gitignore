@@ -1,3 +1,9 @@
+# Ignoruj wszystko w katalogu głównym poza plikiem solucji, src i samym .gitignore
+/*
+!/.gitignore
+!/LegAid.slnx
+!/src/
+
 # Build
 bin/
 obj/

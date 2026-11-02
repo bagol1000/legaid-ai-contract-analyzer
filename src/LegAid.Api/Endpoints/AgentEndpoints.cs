@@ -35,9 +35,6 @@ public static class AgentEndpoints
     }
 }
 
-/// <param name="Message">Pytanie prawne albo treść umowy.</param>
 public sealed record AskRequest(string Message);
 
-/// <param name="Answer">Odpowiedź agenta.</param>
-/// <param name="Model">Model, który wygenerował odpowiedź.</param>
 public sealed record AskResponse(string Answer, string? Model);
