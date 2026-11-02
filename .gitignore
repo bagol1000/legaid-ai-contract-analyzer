@@ -1,7 +1,9 @@
-# Ignoruj wszystko w katalogu głównym poza plikiem solucji, src i samym .gitignore
+# Ignoruj wszystko w katalogu głównym poza plikami projektu
 /*
 !/.gitignore
 !/LegAid.slnx
+!/README.md
+!/docs/
 !/src/
 
 # Build
