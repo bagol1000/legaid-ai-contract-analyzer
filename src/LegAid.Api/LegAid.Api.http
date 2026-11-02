@@ -5,24 +5,29 @@ POST {{host}}/api/agent/ask
 Content-Type: application/json
 
 {
-  "message": "Czy w umowie o pracę można zapisać, że pracownik nie ma prawa do urlopu wypoczynkowego w pierwszym roku pracy?"
+  "message": "Czy pracodawca może wyłączyć prawo do urlopu w pierwszym roku pracy?"
 }
 
-### Fragment umowy do analizy
+### Umowa najmu (najemca jest konsumentem)
 POST {{host}}/api/agent/ask
 Content-Type: application/json
 
 {
-  "message": "Przeanalizuj fragment umowy najmu mieszkania (najemca jest konsumentem): § 5. Najemca zapłaci karę umowną 1000 zł za każdy dzień opóźnienia w zapłacie czynszu. § 6. Wynajmujący może wypowiedzieć umowę w każdym czasie, bez podania przyczyny i bez okresu wypowiedzenia. § 7. Kaucja nie podlega zwrotowi."
+  "message": "Przeanalizuj umowę najmu, najemca jest konsumentem. § 5. Kara umowna 1000 zł za każdy dzień opóźnienia w zapłacie czynszu. § 6. Wynajmujący może wypowiedzieć umowę w każdym czasie, bez okresu wypowiedzenia. § 7. Kaucja nie podlega zwrotowi."
 }
 
-### Pusty tekst -> 400
+### Pismo: wezwanie do zapłaty
+POST {{host}}/api/agent/ask
+Content-Type: application/json
+
+{
+  "message": "Dostałem takie pismo, co mam zrobić? \"Wzywamy do zapłaty kwoty 2 340 zł z tytułu faktury nr 14/2021 w terminie 7 dni. Brak wpłaty skutkuje skierowaniem sprawy do sądu i wpisem do rejestru dłużników.\""
+}
+
+### Pusta wiadomość -> 400
 POST {{host}}/api/agent/ask
 Content-Type: application/json
 
 {
   "message": ""
 }
-
-### Dokument OpenAPI
-GET {{host}}/openapi/v1.json

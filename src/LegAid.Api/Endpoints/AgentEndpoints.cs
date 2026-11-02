@@ -11,7 +11,7 @@ public static class AgentEndpoints
 
         group.MapPost("/ask", AskAsync)
             .WithName("AskLegalAgent")
-            .WithSummary("Zadaj pytanie prawne albo wklej treść umowy do analizy.");
+            .WithSummary("Zadaj pytanie prawne albo wklej umowę lub pismo do analizy.");
 
         return app;
     }
@@ -35,6 +35,9 @@ public static class AgentEndpoints
     }
 }
 
-public sealed record AskRequest(string Message);
+/// <param name="Message">Pytanie prawne albo treść umowy lub pisma.</param>
+public sealed record AskRequest(string? Message);
 
+/// <param name="Answer">Odpowiedź agenta.</param>
+/// <param name="Model">Model, który wygenerował odpowiedź.</param>
 public sealed record AskResponse(string Answer, string? Model);

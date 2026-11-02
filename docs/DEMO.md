@@ -1,47 +1,47 @@
-# Demo — LegAid (zajęcia, czwartek)
+# Demo — ściąga
 
-Agent prawny: ASP.NET Core Web API (.NET 10) → `IChatClient` (Microsoft.Extensions.AI) → OpenAI `gpt-5-nano`.
-
-## 1. Uruchomienie
+## Start
 
 ```powershell
-$env:OpenAI__ApiKey = "sk-..."          # albo: dotnet user-secrets set "OpenAI:ApiKey" "sk-..."
+$env:OpenAI__ApiKey = "sk-..."    # albo raz: dotnet user-secrets set "OpenAI:ApiKey" "sk-..." (w src\LegAid.Api)
 cd src\LegAid.Api
-dotnet run                              # Now listening on: http://localhost:5080
+dotnet run                        # http://localhost:5080
 ```
 
-## 2. Zapytania (nowe okno PowerShell)
+Bez klucza aplikacja nie wstanie i od razu powie, czego brakuje.
 
-Pytanie prawne:
+## Zapytania
+
+W drugim oknie PowerShella. Pytanie prawne:
 
 ```powershell
 (Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"message":"Czy pracodawca może wyłączyć prawo do urlopu w pierwszym roku pracy?"}')) -TimeoutSec 120).answer
 ```
 
-Analiza fragmentu umowy:
+Umowa najmu:
 
 ```powershell
-(Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"message":"Przeanalizuj umowę najmu (najemca jest konsumentem): § 5. Kara umowna 1000 zł za każdy dzień opóźnienia w czynszu. § 6. Wynajmujący może wypowiedzieć umowę w każdym czasie bez okresu wypowiedzenia. § 7. Kaucja nie podlega zwrotowi."}')) -TimeoutSec 120).answer
+(Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"message":"Przeanalizuj umowę najmu, najemca jest konsumentem. § 5. Kara umowna 1000 zł za każdy dzień opóźnienia w czynszu. § 6. Wynajmujący może wypowiedzieć umowę w każdym czasie. § 7. Kaucja nie podlega zwrotowi."}')) -TimeoutSec 120).answer
 ```
 
-Walidacja (pusty tekst → `400 Bad Request`):
+Pismo, wezwanie do zapłaty:
+
+```powershell
+(Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"message":"Dostałem takie pismo, co mam zrobić? Wzywamy do zapłaty 2 340 zł z faktury nr 14/2021 w terminie 7 dni, inaczej sprawa trafi do sądu."}')) -TimeoutSec 120).answer
+```
+
+Pusta wiadomość, 400 bez wywołania modelu:
 
 ```powershell
 Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json" -Body '{"message":""}'
 ```
 
-To samo jest w `src/LegAid.Api/LegAid.Api.http` (VS / Rider: **Send request**), opis API: `http://localhost:5080/openapi/v1.json`.
+Te same zapytania są w `src/LegAid.Api/LegAid.Api.http` (Visual Studio / Rider / VS Code z REST Client).
+Odpowiedź trwa kilkanaście sekund, warto mieć jedną przygotowaną wcześniej na wypadek problemów z siecią.
 
-## 3. Co pokazać
+## Co pokazać w kodzie
 
-| Punkt | Gdzie w kodzie |
-|---|---|
-| `IChatClient` z OpenAI rejestrowany w DI (`AddChatClient(...).UseFunctionInvocation()`) | `Program.cs` |
-| Klucz poza repo (zmienna `OpenAI__ApiKey` / user-secrets), walidacja przy starcie | `Configuration/OpenAIOptions.cs`, `Program.cs` |
-| System prompt: asystent prawny, polskie prawo, odpowiedzi po polsku | `Agents/LegalAgentPrompts.cs` |
-| Serwis agenta — miejsce na narzędzia (`search_law`) i kontekst z RAG | `Agents/LegalAgent.cs` |
-| Endpoint `POST /api/agent/ask` → `{ answer, model }` | `Endpoints/AgentEndpoints.cs` |
-
-## 4. Dalej
-
-Structured output (lista ryzyk w JSON) → upload PDF/DOCX → RAG z KC/KP → narzędzie `search_law` → ewaluacja → frontend.
+- `Program.cs` — `IChatClient` z OpenAI w DI, klucz poza repo, walidacja konfiguracji przy starcie
+- `Agents/LegalAgentPrompts.cs` — cała „wiedza” agenta to na razie ten prompt
+- `Agents/LegalAgent.cs` — wywołanie modelu i log zużycia tokenów (widać w konsoli serwera)
+- `Endpoints/AgentEndpoints.cs` — endpoint i walidacja

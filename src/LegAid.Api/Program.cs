@@ -7,18 +7,22 @@ using OpenAI;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// User-secrets domyślnie ładują się tylko w Development. Gdy aplikacja startuje bez profilu
+// z launchSettings.json (np. uruchomienie DLL/exe), środowisko to Production i klucz byłby pusty.
+// Ładujemy je więc zawsze, a zmienne środowiskowe dodajemy ponownie, by zachowały pierwszeństwo.
 if (!builder.Environment.IsDevelopment())
 {
     builder.Configuration.AddUserSecrets<Program>(optional: true);
     builder.Configuration.AddEnvironmentVariables();
 }
 
+// Model jest w appsettings.json, klucz w user-secrets albo w zmiennej OpenAI__ApiKey.
 builder.Services.AddOptions<OpenAIOptions>()
     .Bind(builder.Configuration.GetSection(OpenAIOptions.SectionName))
     .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey),
         "Brak klucza OpenAI:ApiKey. Ustaw: dotnet user-secrets set \"OpenAI:ApiKey\" \"sk-...\" albo zmienną OpenAI__ApiKey.")
     .Validate(o => !string.IsNullOrWhiteSpace(o.Model),
-        "Brak OpenAI:Model w konfiguracji.")
+        "Brak OpenAI:Model w appsettings.json.")
     .ValidateOnStart();
 
 builder.Services
@@ -45,7 +49,7 @@ app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi(); // /openapi/v1.json
 }
 
 app.MapAgentEndpoints();
