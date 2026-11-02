@@ -1,1 +1,3 @@
-# Autorzy Adam Bagiński, Krzystof Dąbrowski, Adam Drogowski
+# legaid-ai-contract-analyzer
+
+### Autorzy Adam Bagiński, Krzystof Dąbrowski, Adam Drogowski
