@@ -7,18 +7,15 @@ using OpenAI;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Konfiguracja OpenAI: model z appsettings.json,     
-// klucz z user-secrets (Development) albo zmiennej środowiskowej OpenAI__ApiKey.
+// Model jest w appsettings.json, klucz w user-secrets albo w zmiennej OpenAI__ApiKey.
 builder.Services.AddOptions<OpenAIOptions>()
     .Bind(builder.Configuration.GetSection(OpenAIOptions.SectionName))
     .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey),
         "Brak klucza OpenAI:ApiKey. Ustaw: dotnet user-secrets set \"OpenAI:ApiKey\" \"sk-...\" albo zmienną OpenAI__ApiKey.")
     .Validate(o => !string.IsNullOrWhiteSpace(o.Model),
-        "Brak OpenAI:Model w konfiguracji.")
+        "Brak OpenAI:Model w appsettings.json.")
     .ValidateOnStart();
 
-// Model
-// IChatClient z OpenAI + automatyczne wykonywanie narzędzi (gotowe na AIFunctionFactory).
 builder.Services
     .AddChatClient(sp =>
     {
@@ -31,7 +28,6 @@ builder.Services
     .UseFunctionInvocation()
     .UseLogging();
 
-// Agent
 builder.Services.AddScoped<ILegalAgent, LegalAgent>();
 
 builder.Services.AddOpenApi();

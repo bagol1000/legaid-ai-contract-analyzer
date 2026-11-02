@@ -1,139 +1,80 @@
 # LegAid
 
-**Agent AI do analizy umów według polskiego prawa**
+Asystent AI do analizy umów i pism prawnych według prawa polskiego
 
-Projekt na przedmiot „Tworzenie agentów AI w .NET” (PW)
+Tworzenie agentów AI w .NET, PW
+Adam Bagiński, Krzysztof Dąbrowski, Adam Drogowski
 
 ---
 
 ## Problem
 
-Umowę najmu, zlecenia czy pracę podpisuje się często bez konsultacji z prawnikiem,
-więc niekorzystne zapisy wychodzą dopiero przy sporze.
+Umowy najmu, zlecenia czy o pracę zwykle podpisuje się bez prawnika.
+Podobnie z wezwaniem do zapłaty albo wypowiedzeniem: trzeba je zrozumieć, zanim minie termin.
 
-**LegAid** przyjmuje pytanie prawne albo treść umowy i:
-
-- wskazuje postanowienia niezgodne z prawem,
-- wskazuje klauzule ryzykowne i potencjalnie abuzywne (art. 385¹ i nast. KC),
-- wskazuje luki, czyli brakujące istotne postanowienia,
-- podaje podstawę prawną i proponuje poprawione brzmienie.
+LegAid przyjmuje pytanie albo tekst dokumentu. W umowie szuka zapisów niezgodnych z prawem,
+klauzul abuzywnych i braków, a do każdego problemu podaje przepis i proponuje lepsze brzmienie.
+Pismo tłumaczy na zwykły język: o co chodzi, do kiedy i co można zrobić.
 
 ---
 
 ## Architektura
 
 ```
-klient HTTP
-    │  POST /api/agent/ask
-    ▼
-AgentEndpoints        walidacja, kontrakt { answer, model }
-    ▼
-ILegalAgent           system prompt + wiadomość użytkownika
-    ▼
-IChatClient           Microsoft.Extensions.AI: wywoływanie narzędzi, logowanie
-    ▼
-OpenAI                gpt-5-nano
+POST /api/agent/ask  { "message": "..." }
+        │
+AgentEndpoints   walidacja
+        │
+LegalAgent       system prompt + wiadomość
+        │
+IChatClient      Microsoft.Extensions.AI
+        │
+OpenAI           gpt-5-nano
+        │
+{ "answer": "...", "model": "..." }
 ```
 
-**Stack:** ASP.NET Core Web API (.NET 10), Microsoft.Extensions.AI, OpenAI, OpenAPI
-
-Agent zależy tylko od `IChatClient`, więc model można zmienić w `appsettings.json`,
-a narzędzia dodać bez zmian w rejestracji klienta.
+ASP.NET Core (.NET 10), Microsoft.Extensions.AI, OpenAI.
+Agent zna tylko `IChatClient`, więc zmiana modelu to jedna linia w `appsettings.json`.
 
 ---
 
-## System prompt
+## Prompt
 
-Zachowanie agenta definiuje `Agents/LegalAgentPrompts.cs`:
+`Agents/LegalAgentPrompts.cs`:
 
-- specjalizacja: prawo polskie (KC, KP, ustawa o prawach konsumenta),
-- przepisy powołuje tylko wtedy, gdy ma pewność,
-- nie wymyśla przepisów ani orzeczeń,
-- mówi wprost, gdy czegoś nie wie lub stan prawny może być nieaktualny,
-- zaznacza, że odpowiedź nie stanowi porady prawnej.
+- prawo polskie: KC, KP, prawa konsumenta
+- osobny tryb dla umów i dla pozostałych pism
+- przepis podaje tylko, gdy jest pewien; nie wymyśla orzeczeń
+- na końcu zastrzeżenie, że to nie porada prawna
 
 ---
 
-## Uruchomienie
+## Demo
 
 ```powershell
-cd src\LegAid.Api
-$env:OpenAI__ApiKey = "sk-..."
-dotnet run    # http://localhost:5080
+ask "Czy pracodawca może wyłączyć prawo do urlopu w pierwszym roku pracy?"
+
+ask "Przeanalizuj umowę najmu, najemca jest konsumentem. § 5. Kara umowna 1000 zł
+     za każdy dzień opóźnienia w czynszu. § 6. Wynajmujący może wypowiedzieć umowę
+     w każdym czasie. § 7. Kaucja nie podlega zwrotowi."
+
+ask "Dostałem takie pismo, co mam zrobić? 'Wzywamy do zapłaty 2 340 zł z faktury
+     nr 14/2021 w terminie 7 dni, inaczej sprawa trafi do sądu.'"
+
+ask ""   # 400, pusty tekst nie trafia do modelu
 ```
 
-Kontrakt API:
-
-```
-POST /api/agent/ask
-{ "message": "pytanie albo treść umowy" }
-→ 200 { "answer": "...", "model": "gpt-5-nano-..." }
-→ 400 gdy "message" jest puste
-```
+(`ask` to kilkulinijkowa funkcja z `docs/DEMO.md`)
 
 ---
 
-## Przykład 1: pytanie prawne
+## Co dalej
 
-```powershell
-(Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"message":"Czy pracodawca może wyłączyć prawo do urlopu w pierwszym roku pracy?"}')) -TimeoutSec 120).answer
-```
+Dziś model odpowiada z własnej wiedzy i nic tego nie sprawdza. Plan:
 
----
-
-## Przykład 2: analiza umowy najmu
-
-```powershell
-(Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"message":"Przeanalizuj umowę najmu (najemca jest konsumentem): § 5. Kara umowna 1000 zł za każdy dzień opóźnienia w czynszu. § 6. Wynajmujący może wypowiedzieć umowę w każdym czasie bez okresu wypowiedzenia. § 7. Kaucja nie podlega zwrotowi."}')) -TimeoutSec 120).answer
-```
-
----
-
-## Przykład 3: analiza umowy zlecenia
-
-```powershell
-(Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"message":"Przeanalizuj umowę zlecenia: § 3. Zleceniobiorca przez 5 lat po zakończeniu umowy nie może pracować dla konkurencji i nie otrzymuje z tego tytułu odszkodowania. § 4. Zleceniodawca może jednostronnie obniżyć wynagrodzenie. § 5. Wszelkie spory rozstrzyga sąd właściwy dla siedziby Zleceniodawcy."}')) -TimeoutSec 120).answer
-```
-
----
-
-## Przykład 4: walidacja
-
-Pusta wiadomość nie trafia do modelu. API zwraca `400` i opis błędu:
-
-```powershell
-try { Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json" -Body '{"message":""}' } catch { $_.Exception.Response.StatusCode.value__; $s = $_.Exception.Response.GetResponseStream(); $s.Position = 0; (New-Object IO.StreamReader($s)).ReadToEnd() }
-```
-
----
-
-## Przykład 5: pełna odpowiedź i opis API
-
-Odpowiedź z nazwą modelu, który ją wygenerował:
-
-```powershell
-Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"message":"Jaki jest okres wypowiedzenia umowy o pracę na czas nieokreślony po 4 latach zatrudnienia?"}')) -TimeoutSec 120 | Format-List
-```
-
-Dokument OpenAPI (środowisko Development):
-
-```powershell
-Invoke-RestMethod http://localhost:5080/openapi/v1.json | ConvertTo-Json -Depth 10
-```
-
----
-
-## Stan projektu i dalsze kroki
-
-**Działa dziś:** jeden endpoint, system prompt, walidacja wejścia, logowanie zużycia tokenów.
-
-**Dalej:**
-
-1. Structured output: lista ryzyk w JSON
-2. Upload PDF/DOCX
-3. RAG z KC i KP
-4. Narzędzie `search_law`
-5. Ewaluacja jakości odpowiedzi
-6. Frontend
-
-Odpowiedzi modelu nie są dziś weryfikowane względem tekstu przepisów. Ma to zmienić RAG i `search_law`.
+1. odpowiedź jako lista ryzyk w JSON zamiast samego tekstu
+2. wgrywanie PDF i DOCX
+3. RAG na tekstach KC i KP + narzędzie `search_law`, żeby przepisy dało się zweryfikować
+4. ocena jakości odpowiedzi na zestawie przykładowych dokumentów
+5. frontend
