@@ -7,7 +7,7 @@ using OpenAI;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Konfiguracja OpenAI: model z appsettings.json,
+// Konfiguracja OpenAI: model z appsettings.json,     
 // klucz z user-secrets (Development) albo zmiennej środowiskowej OpenAI__ApiKey.
 builder.Services.AddOptions<OpenAIOptions>()
     .Bind(builder.Configuration.GetSection(OpenAIOptions.SectionName))
