@@ -52,20 +52,12 @@ Agent zna tylko `IChatClient`, więc zmiana modelu to jedna linia w `appsettings
 
 ## Demo
 
-```powershell
-ask "Czy pracodawca może wyłączyć prawo do urlopu w pierwszym roku pracy?"
+1. Pytanie: czy pracodawca może wyłączyć urlop w pierwszym roku pracy?
+2. Umowa najmu z karą 1000 zł dziennie, wypowiedzeniem „w każdym czasie” i bezzwrotną kaucją
+3. Wezwanie do zapłaty z faktury z 2021 r.
+4. Pusta wiadomość: 400, model nie jest wywoływany
 
-ask "Przeanalizuj umowę najmu, najemca jest konsumentem. § 5. Kara umowna 1000 zł
-     za każdy dzień opóźnienia w czynszu. § 6. Wynajmujący może wypowiedzieć umowę
-     w każdym czasie. § 7. Kaucja nie podlega zwrotowi."
-
-ask "Dostałem takie pismo, co mam zrobić? 'Wzywamy do zapłaty 2 340 zł z faktury
-     nr 14/2021 w terminie 7 dni, inaczej sprawa trafi do sądu.'"
-
-ask ""   # 400, pusty tekst nie trafia do modelu
-```
-
-(`ask` to kilkulinijkowa funkcja z `docs/DEMO.md`)
+Komendy są w `docs/DEMO.md`.
 
 ---
 

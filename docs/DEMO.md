@@ -12,25 +12,28 @@ Bez klucza aplikacja nie wstanie i od razu powie, czego brakuje.
 
 ## Zapytania
 
-W drugim oknie (PowerShell 7) wklejamy raz:
+W drugim oknie PowerShella. Pytanie prawne:
 
 ```powershell
-function ask($text) {
-    $body = @{ message = $text } | ConvertTo-Json
-    $res = Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post `
-        -ContentType "application/json; charset=utf-8" `
-        -Body ([Text.Encoding]::UTF8.GetBytes($body)) -TimeoutSec 120 -SkipHttpErrorCheck
-    $res.answer ?? ($res | ConvertTo-Json -Depth 5)
-}
+(Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"message":"Czy pracodawca może wyłączyć prawo do urlopu w pierwszym roku pracy?"}')) -TimeoutSec 120).answer
 ```
 
-Potem już tylko:
+Umowa najmu:
 
 ```powershell
-ask "Czy pracodawca może wyłączyć prawo do urlopu w pierwszym roku pracy?"
-ask "Przeanalizuj umowę najmu, najemca jest konsumentem. § 5. Kara umowna 1000 zł za każdy dzień opóźnienia w czynszu. § 6. Wynajmujący może wypowiedzieć umowę w każdym czasie. § 7. Kaucja nie podlega zwrotowi."
-ask "Dostałem takie pismo, co mam zrobić? 'Wzywamy do zapłaty 2 340 zł z faktury nr 14/2021 w terminie 7 dni, inaczej sprawa trafi do sądu.'"
-ask ""    # 400, nie idzie do modelu
+(Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"message":"Przeanalizuj umowę najmu, najemca jest konsumentem. § 5. Kara umowna 1000 zł za każdy dzień opóźnienia w czynszu. § 6. Wynajmujący może wypowiedzieć umowę w każdym czasie. § 7. Kaucja nie podlega zwrotowi."}')) -TimeoutSec 120).answer
+```
+
+Pismo, wezwanie do zapłaty:
+
+```powershell
+(Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"message":"Dostałem takie pismo, co mam zrobić? Wzywamy do zapłaty 2 340 zł z faktury nr 14/2021 w terminie 7 dni, inaczej sprawa trafi do sądu."}')) -TimeoutSec 120).answer
+```
+
+Pusta wiadomość, 400 bez wywołania modelu:
+
+```powershell
+Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json" -Body '{"message":""}'
 ```
 
 Te same zapytania są w `src/LegAid.Api/LegAid.Api.http` (Visual Studio / Rider / VS Code z REST Client).
