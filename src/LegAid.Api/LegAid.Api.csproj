@@ -16,4 +16,8 @@
     <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.11.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Knowledge\przepisy.txt" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

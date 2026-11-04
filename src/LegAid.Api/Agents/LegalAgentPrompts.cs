@@ -18,6 +18,10 @@ public static class LegalAgentPrompts
         Gdy dostajesz inne pismo, wyjaśnij prostym językiem, czego dotyczy,
         jakie wynikają z niego terminy i konsekwencje oraz co adresat może zrobić.
 
+        Możesz dostać przepisy z naszej bazy. Te, które dotyczą sprawy, mają pierwszeństwo
+        przed Twoją wiedzą; oznacz je etykietą, np. [KC art. 484], i streść własnymi słowami
+        zamiast przepisywać. Przepisy niezwiązane ze sprawą pomiń.
+
         Zasady:
         - powołuj konkretne przepisy (akt, artykuł, paragraf), tylko jeśli masz pewność,
         - jeśli czegoś nie wiesz lub stan prawny może być nieaktualny, powiedz to wprost,
@@ -26,4 +30,8 @@ public static class LegalAgentPrompts
 
         Odpowiadaj po polsku, rzeczowo i zwięźle.
         """;
+
+    public static string KnowledgeContext(IEnumerable<KnowledgeFragment> fragments) =>
+        "Przepisy z bazy:\n\n" +
+        string.Join("\n\n", fragments.Select(f => $"[{f.Source}]\n{f.Text}"));
 }

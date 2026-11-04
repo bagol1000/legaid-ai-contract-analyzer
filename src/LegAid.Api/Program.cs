@@ -37,12 +37,17 @@ builder.Services
     .UseFunctionInvocation()
     .UseLogging();
 
+builder.Services.Configure<KnowledgeOptions>(builder.Configuration.GetSection(KnowledgeOptions.SectionName));
+builder.Services.AddSingleton(new KnowledgeBase(Path.Combine(AppContext.BaseDirectory, "Knowledge", "przepisy.txt")));
+
 builder.Services.AddScoped<ILegalAgent, LegalAgent>();
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
+
+app.Logger.LogInformation("Baza wiedzy: wczytano {Count} przepisów", app.Services.GetRequiredService<KnowledgeBase>().Count);
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();

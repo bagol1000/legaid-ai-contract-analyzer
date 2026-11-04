@@ -1,19 +1,35 @@
 @host = http://localhost:5080
 
-### Pytanie prawne
+### Urlop w pierwszej pracy
 POST {{host}}/api/agent/ask
 Content-Type: application/json
 
 {
-  "message": "Czy pracodawca może wyłączyć prawo do urlopu w pierwszym roku pracy?"
+  "message": "Zaczynam pierwszą pracę i szef mówi, że w pierwszym roku urlop mi się nie należy. Czy to prawda?"
 }
 
-### Umowa najmu (najemca jest konsumentem)
+### Umowa najmu
 POST {{host}}/api/agent/ask
 Content-Type: application/json
 
 {
-  "message": "Przeanalizuj umowę najmu, najemca jest konsumentem. § 5. Kara umowna 1000 zł za każdy dzień opóźnienia w zapłacie czynszu. § 6. Wynajmujący może wypowiedzieć umowę w każdym czasie, bez okresu wypowiedzenia. § 7. Kaucja nie podlega zwrotowi."
+  "message": "Mam podpisać umowę najmu mieszkania i niepokoją mnie te zapisy: § 5. Za każdy dzień spóźnienia z czynszem najemca płaci 1000 zł kary umownej. § 6. Wynajmujący może wypowiedzieć umowę w każdym czasie. § 7. Kaucja nie podlega zwrotowi. Podpisywać?"
+}
+
+### Kaucja po wyprowadzce
+POST {{host}}/api/agent/ask
+Content-Type: application/json
+
+{
+  "message": "Wyprowadziłem się z wynajmowanego mieszkania dwa miesiące temu, a właściciel dalej nie oddał mi kaucji. Może ją tak po prostu zatrzymać?"
+}
+
+### Regulamin siłowni
+POST {{host}}/api/agent/ask
+Content-Type: application/json
+
+{
+  "message": "Zapisałem się na siłownię i w regulaminie jest: § 4. Klub może w każdym czasie zmienić cenę karnetu. § 7. Klubowicz nie może wypowiedzieć umowy przed upływem 24 miesięcy. § 9. Spory rozstrzyga sąd właściwy dla siedziby Klubu. Czy to w ogóle jest legalne?"
 }
 
 ### Pismo: wezwanie do zapłaty
@@ -21,7 +37,7 @@ POST {{host}}/api/agent/ask
 Content-Type: application/json
 
 {
-  "message": "Dostałem takie pismo, co mam zrobić? \"Wzywamy do zapłaty kwoty 2 340 zł z tytułu faktury nr 14/2021 w terminie 7 dni. Brak wpłaty skutkuje skierowaniem sprawy do sądu i wpisem do rejestru dłużników.\""
+  "message": "Przyszedł do mnie list: Wzywamy do zapłaty 2 340 zł z faktury nr 14/2021 w terminie 7 dni, inaczej sprawa trafi do sądu. Nawet nie pamiętam, za co to było. Muszę płacić?"
 }
 
 ### Pusta wiadomość -> 400

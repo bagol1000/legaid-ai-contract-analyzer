@@ -1,16 +1,33 @@
+using LegAid.Api.Configuration;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Options;
 
 namespace LegAid.Api.Agents;
 
-public sealed class LegalAgent(IChatClient chatClient, ILogger<LegalAgent> logger) : ILegalAgent
+public sealed class LegalAgent(
+    IChatClient chatClient,
+    KnowledgeBase knowledgeBase,
+    IOptions<KnowledgeOptions> knowledgeOptions,
+    ILogger<LegalAgent> logger) : ILegalAgent
 {
     public async Task<LegalAgentAnswer> AskAsync(string message, CancellationToken cancellationToken = default)
     {
-        List<ChatMessage> messages =
-        [
-            new(ChatRole.System, LegalAgentPrompts.System),
-            new(ChatRole.User, message)
-        ];
+        List<ChatMessage> messages = [new(ChatRole.System, LegalAgentPrompts.System)];
+
+        if (knowledgeOptions.Value.Enabled)
+        {
+            var fragments = knowledgeBase.Search(message, max: 4);
+
+            logger.LogInformation("Baza wiedzy: znalezione przepisy ({Count}): {Sources}",
+                fragments.Count, string.Join(", ", fragments.Select(f => f.Source)));
+
+            if (fragments.Count > 0)
+            {
+                messages.Add(new(ChatRole.System, LegalAgentPrompts.KnowledgeContext(fragments)));
+            }
+        }
+
+        messages.Add(new(ChatRole.User, message));
 
         var options = new ChatOptions();
 

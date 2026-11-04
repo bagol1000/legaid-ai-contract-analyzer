@@ -1,72 +1,53 @@
 # LegAid
 
-Asystent AI do analizy umów i pism prawnych według prawa polskiego
+Asystent AI do analizy umów i pism prawnych według prawa polskiego.
+Tworzenie agentów AI w .NET, PW. Adam Bagiński, Krzysztof Dąbrowski, Adam Drogowski.
 
-Tworzenie agentów AI w .NET, PW
-Adam Bagiński, Krzysztof Dąbrowski, Adam Drogowski
-
----
+Notatki do pokazu. Komendy i kolejność kroków są w `DEMO.md`.
 
 ## Problem
 
-Umowy najmu, zlecenia czy o pracę zwykle podpisuje się bez prawnika.
-Podobnie z wezwaniem do zapłaty albo wypowiedzeniem: trzeba je zrozumieć, zanim minie termin.
+Większość ludzi podpisuje umowę najmu albo regulamin siłowni bez czytania drobnego druku, a o prawnika nikt nie pyta. To samo z wezwaniem do zapłaty: list przychodzi, jest strach, a nie wiadomo, czy dług w ogóle jest jeszcze wymagalny.
 
-LegAid przyjmuje pytanie albo tekst dokumentu. W umowie szuka zapisów niezgodnych z prawem,
-klauzul abuzywnych i braków, a do każdego problemu podaje przepis i proponuje lepsze brzmienie.
-Pismo tłumaczy na zwykły język: o co chodzi, do kiedy i co można zrobić.
+LegAid dostaje pytanie albo tekst umowy czy pisma i odpowiada zwykłym językiem, z podaniem przepisu. Przy umowie mówi, które zapisy są problemem i jak je poprawić.
 
----
-
-## Architektura
+## Jak to działa
 
 ```
 POST /api/agent/ask  { "message": "..." }
-        │
-AgentEndpoints   walidacja
-        │
-LegalAgent       system prompt + wiadomość
-        │
-IChatClient      Microsoft.Extensions.AI
-        │
-OpenAI           gpt-5-nano
-        │
-{ "answer": "...", "model": "..." }
+   -> AgentEndpoints   sprawdza, czy wiadomość nie jest pusta
+   -> LegalAgent       szuka pasujących przepisów w bazie
+   -> KnowledgeBase    3-4 przepisy z Knowledge/przepisy.txt
+   -> IChatClient      prompt + przepisy + pytanie
+   -> OpenAI           gpt-5-nano
+<- { "answer": "...", "model": "..." }
 ```
 
-ASP.NET Core (.NET 10), Microsoft.Extensions.AI, OpenAI.
-Agent zna tylko `IChatClient`, więc zmiana modelu to jedna linia w `appsettings.json`.
+ASP.NET Core (.NET 10), Microsoft.Extensions.AI, OpenAI. Agent nie wie, z jakim modelem rozmawia, zna tylko `IChatClient`. Model zmienia się w `appsettings.json`.
 
----
+## Baza wiedzy
+
+Bez bazy model odpowiada z pamięci i potrafi pomylić numer artykułu. Dlatego dołożyliśmy mały RAG: plik tekstowy z 19 przepisami z KC, KP, ustawy o ochronie praw lokatorów i ustawy o BIG, dobranymi pod nasze przykłady.
+
+Przed każdym pytaniem agent szuka w nim pasujących przepisów (BM25, lokalnie) i dokleja je do rozmowy. Model oznacza je w odpowiedzi, np. `[KC art. 484]`, a w konsoli serwera widać, co zostało znalezione.
 
 ## Prompt
 
-`Agents/LegalAgentPrompts.cs`:
+W `Agents/LegalAgentPrompts.cs`. Najważniejsze zasady: przepisy z bazy streszcza własnymi słowami i podaje ich etykietę, innych przepisów nie zmyśla, a na końcu zaznacza, że to nie jest porada prawna.
 
-- prawo polskie: KC, KP, prawa konsumenta
-- osobny tryb dla umów i dla pozostałych pism
-- przepis podaje tylko, gdy jest pewien; nie wymyśla orzeczeń
-- na końcu zastrzeżenie, że to nie porada prawna
+## Pokaz
 
----
-
-## Demo
-
-1. Pytanie: czy pracodawca może wyłączyć urlop w pierwszym roku pracy?
-2. Umowa najmu z karą 1000 zł dziennie, wypowiedzeniem „w każdym czasie” i bezzwrotną kaucją
-3. Wezwanie do zapłaty z faktury z 2021 r.
-4. Pusta wiadomość: 400, model nie jest wywoływany
-
-Komendy są w `docs/DEMO.md`.
-
----
+1. urlop w pierwszym roku pracy
+2. umowa najmu z trzema złymi zapisami
+3. kaucja nieoddana po wyprowadzce
+4. regulamin siłowni
+5. wezwanie do zapłaty ze starej faktury
+6. pusta wiadomość, czyli błąd 400
 
 ## Co dalej
 
-Dziś model odpowiada z własnej wiedzy i nic tego nie sprawdza. Plan:
-
-1. odpowiedź jako lista ryzyk w JSON zamiast samego tekstu
-2. wgrywanie PDF i DOCX
-3. RAG na tekstach KC i KP + narzędzie `search_law`, żeby przepisy dało się zweryfikować
-4. ocena jakości odpowiedzi na zestawie przykładowych dokumentów
-5. frontend
+- odpowiedź w JSON (lista ryzyk zamiast tekstu)
+- wgrywanie PDF i DOCX
+- pełne teksty KC i KP w bazie i wyszukiwanie przez embeddingi
+- testy jakości odpowiedzi na zestawie przykładowych umów
+- frontend
