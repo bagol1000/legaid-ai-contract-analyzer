@@ -57,6 +57,9 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi(); // /openapi/v1.json
 }
 
+app.UseDefaultFiles(); // wwwroot/index.html pod adresem /
+app.UseStaticFiles();
+
 app.MapAgentEndpoints();
 
 app.Run();

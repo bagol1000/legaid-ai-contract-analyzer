@@ -6,6 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>LegAid.Api</RootNamespace>
     <UserSecretsId>6b3c8d29-78df-4d74-abc5-2488bf283ea4</UserSecretsId>
+    <!-- Bez LegAid.Api.exe: Smart App Control w Windows blokuje niepodpisane exe, dotnet run startuje wtedy przez dotnet.exe -->
+    <UseAppHost>false</UseAppHost>
   </PropertyGroup>
 
   <ItemGroup>
