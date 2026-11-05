@@ -136,6 +136,17 @@
   button:disabled { opacity: .4; cursor: default; }
   .note { margin: 8px 0 0; color: var(--muted); font: 400 12px/1.4 var(--sans); }
 
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .examples button {
+    flex: none;
+    padding: 3px 10px;
+    border: 1px solid var(--rule);
+    background: transparent;
+    color: var(--muted);
+    font: 400 13px/1.4 var(--sans);
+  }
+  .examples button:hover { border-color: var(--seal); color: var(--seal); opacity: 1; }
+
   @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
   @keyframes pulse { 50% { opacity: .25; transform: scale(.7); } }
 
@@ -146,6 +157,7 @@
     .empty { padding-top: 6vh; }
     .empty h1 { font-size: 28px; }
     .user div { max-width: 92%; }
+    .examples { flex-wrap: nowrap; overflow-x: auto; }
   }
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -173,6 +185,7 @@
 
   <footer>
     <div class="column">
+      <div class="examples" id="examples" role="group" aria-label="Przykładowe pytania"></div>
       <form id="form">
         <textarea id="input" rows="1" placeholder="Napisz pytanie albo wklej zapis z umowy…" aria-label="Twoja wiadomość" autofocus></textarea>
         <button id="send" type="submit">Wyślij</button>
@@ -187,6 +200,17 @@
   const form = document.getElementById("form");
   const input = document.getElementById("input");
   const send = document.getElementById("send");
+
+  // Pytania z pokazu (docs/DEMO.md): kliknięcie wpisuje tekst do pola, wysyła się go ręcznie.
+  const examples = [
+    ["Umowa najmu", "Mam podpisać umowę najmu mieszkania i niepokoją mnie te zapisy: § 5. Za każdy dzień spóźnienia z czynszem najemca płaci 1000 zł kary umownej. § 6. Wynajmujący może wypowiedzieć umowę w każdym czasie. § 7. Kaucja nie podlega zwrotowi. Podpisywać?"],
+    ["A co z § 7?", "a co z § 7?"],
+    ["Okres wypowiedzenia","Ile wynosi okres wypowiedzenia umowy o pracę po 4 latach zatrudnienia?"],
+    ["Urlop w pierwszej pracy", "Zaczynam pierwszą pracę i szef mówi, że w pierwszym roku urlop mi się nie należy. Czy to prawda?"],
+    ["Kaucja po wyprowadzce", "Wyprowadziłem się z wynajmowanego mieszkania dwa miesiące temu, a właściciel dalej nie oddał mi kaucji. Może ją tak po prostu zatrzymać?"],
+    ["Regulamin siłowni", "Zapisałem się na siłownię i w regulaminie jest: § 4. Klub może w każdym czasie zmienić cenę karnetu. § 7. Klubowicz nie może wypowiedzieć umowy przed upływem 24 miesięcy. § 9. Spory rozstrzyga sąd właściwy dla siedziby Klubu. Czy to w ogóle jest legalne?"],
+    ["Wezwanie do zapłaty", "Przyszedł do mnie list: Wzywamy do zapłaty 2 340 zł z faktury nr 14/2021 w terminie 7 dni, inaczej sprawa trafi do sądu. Nawet nie pamiętam, za co to było. Muszę płacić?"]
+  ];
 
   // Pamięć rozmowy: wysyłana z każdym pytaniem, znika po odświeżeniu strony.
   const conversation = [];
@@ -322,6 +346,18 @@
       input.focus();
     }
   });
+
+  for (const [label, text] of examples) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.addEventListener("click", () => {
+      input.value = text;
+      resize();
+      input.focus();
+    });
+    document.getElementById("examples").append(button);
+  }
 
   input.addEventListener("input", resize);
   input.addEventListener("keydown", event => {
