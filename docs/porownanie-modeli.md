@@ -8,6 +8,8 @@ Zostajemy przy **gpt-6-luna**. Spośród szybkich modeli tylko ona bezbłędnie 
 
 Najlepszy model z PCSS to **gpt-oss_120b**: jest szybszy (7 s) i tańszy (5 zł), ale słabszy w trudniejszych pytaniach. Trzymamy go jako zapasowy model na wypadek, gdyby dane musiały zostać w Polsce.
 
+Claude Sonnet 5.5 dorównuje lunie jakością, ale przy naszym zużyciu kosztuje około 146 zł za 1000 pytań, czyli mniej więcej 18 razy więcej.
+
 ## Jak testowaliśmy
 
 Każdy model przeszedł przez naszą aplikację w tej samej konfiguracji: ten sam prompt systemowy i ta sama baza 20 przepisów. Dostał też te same sześć pytań:
@@ -19,7 +21,7 @@ Każdy model przeszedł przez naszą aplikację w tej samej konfiguracji: ten sa
 5. Wezwanie do zapłaty za fakturę z 2021 r.
 6. Testament i wydziedziczenie. Tego tematu nie ma w bazie, więc sprawdzamy, czy model nie zmyśla.
 
-Ocenialiśmy trafność prawną, trzymanie się bazy i styl odpowiedzi. Do tego doszły czas i koszt. Koszt liczymy z tokenów zapisanych w logach i cennika dostawcy. Każdy model miał jedno podejście, więc wyniki to dobra orientacja, nie twardy pomiar.
+Ocenialiśmy trafność prawną, trzymanie się bazy i styl odpowiedzi. Do tego doszły czas i koszt. Koszt liczymy z tokenów zapisanych w logach i cennika dostawcy. Modele Claude (Haiku 5.5 i Sonnet 5.5) testowaliśmy osobnym skryptem przez oficjalne SDK Anthropic. Prompt i baza były identyczne jak w aplikacji, tylko zapytanie nie przechodziło przez nią. Każdy model miał jedno podejście, więc wyniki to dobra orientacja, nie twardy pomiar.
 
 Testy można powtórzyć skryptem [`scripts/compare-models.ps1`](../scripts/compare-models.ps1).
 
@@ -30,27 +32,31 @@ Tabela obejmuje tylko modele, które odpowiadały średnio w mniej niż 20 sekun
 | # | Model | Dostawca | Prawo | Trzyma się bazy | Styl | Śr. czas | Koszt / 1000 pytań |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | gpt-6-luna | OpenAI | 5 | 5 | 5 | 10,8 s | ok. 8 zł |
-| 2 | gpt-oss_120b | PCSS | 4 | 5 | 4 | 6,8 s | 5 zł |
-| 3 | MiMo-V2.6-Flash-RL | PCSS | 4 | 5 | 5 | 8,1 s | 11 zł |
-| 4 | gemma-4-26B-A4B-it | PCSS | 4 | 5 | 4 | 4,0 s | 6 zł |
-| 5 | DeepSeek-V4-Flash | PCSS | 4 | 3 | 5 | 8,3 s | 13 zł |
-| 6 | Qwen3-VL-235B | PCSS | 4 | 5 | 4 | 8,7 s | 76 zł |
-| 7 | MiniMax-M2.5 | PCSS | 4 | 5 | 2 | 10,4 s | 26 zł |
-| 8 | Bielik-11B-v3.0-Instruct | PCSS | 3 | 4 | 4 | 5,1 s | 4 zł |
-| 9 | Mistral-Small-3.2:24b | PCSS | 2 | 5 | 4 | 8,0 s | 4 zł |
-| 10 | bielik_11b | PCSS | 2 | 4 | 4 | 10,7 s | 4 zł |
+| 2 | claude-sonnet-5-5 | Anthropic | 5 | 4 | 5 | 12,9 s | ok. 146 zł |
+| 3 | gpt-oss_120b | PCSS | 4 | 5 | 4 | 6,8 s | 5 zł |
+| 4 | MiMo-V2.6-Flash-RL | PCSS | 4 | 5 | 5 | 8,1 s | 11 zł |
+| 5 | gemma-4-26B-A4B-it | PCSS | 4 | 5 | 4 | 4,0 s | 6 zł |
+| 6 | claude-haiku-5-5 | Anthropic | 4 | 4 | 3 | 13,9 s | ok. 10 zł |
+| 7 | DeepSeek-V4-Flash | PCSS | 4 | 3 | 5 | 8,3 s | 13 zł |
+| 8 | Qwen3-VL-235B | PCSS | 4 | 5 | 4 | 8,7 s | 76 zł |
+| 9 | MiniMax-M2.5 | PCSS | 4 | 5 | 2 | 10,4 s | 26 zł |
+| 10 | Bielik-11B-v3.0-Instruct | PCSS | 3 | 4 | 4 | 5,1 s | 4 zł |
+| 11 | Mistral-Small-3.2:24b | PCSS | 2 | 5 | 4 | 8,0 s | 4 zł |
+| 12 | bielik_11b | PCSS | 2 | 4 | 4 | 10,7 s | 4 zł |
 
-Koszt policzyliśmy ze średniego zużycia, czyli około 6–8 tys. tokenów wejścia na pytanie, głównie na bazę przepisów. Ceny PCSS pochodzą z ich panelu. Cenę gpt-6-luna ($0,20 / $1,00 za 1M tokenów) wzięliśmy z [pricepertoken.com](https://pricepertoken.com/pricing-page/model/openai-gpt-6-luna) i przeliczyliśmy po ok. 4 zł za dolara.
+Koszt policzyliśmy ze średniego zużycia, czyli około 6–9 tys. tokenów wejścia na pytanie, głównie na bazę przepisów. Ceny PCSS pochodzą z ich panelu. Cenę gpt-6-luna ($0,20 / $1,00 za 1M tokenów) wzięliśmy z [pricepertoken.com](https://pricepertoken.com/pricing-page/model/openai-gpt-6-luna) Ceny Claude ($0,10 / $0,50 za Haiku 5.5 i $2 / $10 za Sonnet 5.5) pochodzą z cennika Anthropic. Kwoty w dolarach przeliczyliśmy po ok. 4 zł za dolara. Przy włączonym cache'owaniu promptu koszt Sonneta spadłby mniej więcej o połowę, ale nadal byłby mniej więcej 10 razy wyższy niż luny.
 
 ## Co odróżniło modele
 
 Na łatwych pytaniach (urlop, kaucja, siłownia) prawie wszystkie odpowiadały dobrze. Różnice wyszły na trzech rzeczach:
 
 - **Przedawnienie przy wezwaniu do zapłaty.** Dobre modele same zauważyły, że faktura z 2021 r. może być przedawniona. Radziły też poprosić o dokumenty, zanim cokolwiek się zapłaci. Mistral Small w ogóle nie wspomniał o przedawnieniu, a Bielik v3.0 odpowiedział ogólnikowo.
-- **Kara umowna za czynsz.** Każdy model uznał karę 1000 zł dziennie za rażąco wygórowaną. Z szybkich modeli tylko gpt-6-luna zauważyła, że kary umownej w ogóle nie można zastrzec za spóźnienie z zapłatą pieniędzy (art. 483 KC). Starszy bielik_11b wręcz zaproponował obniżenie kary do 50 zł dziennie.
+- **Kara umowna za czynsz.** Każdy model uznał karę 1000 zł dziennie za rażąco wygórowaną. Z szybkich modeli tylko gpt-6-luna i Claude Sonnet 5.5 zauważyły, że kary umownej w ogóle nie można zastrzec za spóźnienie z zapłatą pieniędzy (art. 483 KC). Starszy bielik_11b wręcz zaproponował obniżenie kary do 50 zł dziennie.
 - **Pytanie spoza bazy.** Większość uczciwie odpowiedziała, że nie ma informacji. Najlepiej zrobił to MiMo-V2.6-Flash: odmówił i od razu odesłał do notariusza. DeepSeek-V4-Flash zaczął objaśniać prawo spadkowe spoza bazy, czyli złamał zasadę.
 
 Jeden model miał też problem techniczny. MiniMax-M2.5 we wszystkich sześciu odpowiedziach pokazywał użytkownikowi swoje „myślenie” w znacznikach `<think>`. Bez dodatkowego filtrowania nie nadaje się do czatu.
+
+Oba modele Claude piszą długo: Haiku średnio prawie 3 tys. tokenów na odpowiedź. Zdarza im się też wspomnieć, że „dysponują” tylko częścią przepisów, choć prompt każe o tym nie pisać. To drobiazg, ale widać go w odpowiedziach.
 
 ## Finał: gpt-6-luna kontra gpt-oss_120b
 
