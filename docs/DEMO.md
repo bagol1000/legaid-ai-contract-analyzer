@@ -21,11 +21,11 @@ Dzień wcześniej puszczamy wszystkie zapytania z listy niżej i zapisujemy jedn
    dotnet run
    ```
 
-   Czekamy na `Now listening on: http://localhost:5080`. Wyżej powinno być `Baza wiedzy: wczytano 19 przepisów`.
+   Czekamy na `Now listening on: http://localhost:5080`. Wyżej powinno być `Baza wiedzy: wczytano 20 przepisów`.
 
 2. Okno 2: wklejamy zapytania po kolei.
 
-3. Po każdej odpowiedzi pokazujemy w oknie 1 linię `Baza wiedzy: znalezione przepisy (...)`, czyli co agent dokleił do pytania. W odpowiedzi te przepisy powinny być oznaczone, np. `[KP art. 153]`.
+3. Po każdej odpowiedzi pokazujemy powołane przepisy, np. `[KP art. 153]`. Agent wysyła do modelu całą bazę, więc czy przepis z niej pochodzi, sprawdzamy w `Knowledge/przepisy.txt`.
 
 4. Na koniec pokazujemy kod (lista na dole).
 
@@ -35,7 +35,7 @@ Odpowiedź przychodzi po kilkunastu sekundach.
 
 ### 1. Urlop w pierwszej pracy
 
-Szef nie ma racji: urlop narasta co miesiąc po 1/12 (art. 153 KP), a ustalenia gorsze niż kodeks są nieważne (art. 18 KP).
+Szef nie ma racji: urlop narasta co miesiąc po 1/12 (art. 153 KP), a roczny wymiar to 20 albo 26 dni (art. 154 KP).
 
 ```powershell
 (Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"message":"Zaczynam pierwszą pracę i szef mówi, że w pierwszym roku urlop mi się nie należy. Czy to prawda?"}')) -TimeoutSec 120).answer
@@ -67,7 +67,7 @@ Wszystkie trzy zapisy są w katalogu klauzul niedozwolonych (art. 385³ KC).
 
 ### 5. Wezwanie do zapłaty
 
-Faktura z 2021 r., a roszczenia ze sprzedaży przedawniają się po 2 latach (art. 554 KC). Dług najpewniej jest przedawniony.
+Sama faktura z 2021 r. nie przesądza o przedawnieniu, bo termin zależy od rodzaju należności: 2 lata przy sprzedaży w ramach działalności (art. 554 KC), a poza tym 3 albo 6 lat (art. 118 KC). Po przedawnieniu nie można domagać się zapłaty od konsumenta (art. 117 § 2¹ KC).
 
 ```powershell
 (Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes('{"message":"Przyszedł do mnie list: Wzywamy do zapłaty 2 340 zł z faktury nr 14/2021 w terminie 7 dni, inaczej sprawa trafi do sądu. Nawet nie pamiętam, za co to było. Muszę płacić?"}')) -TimeoutSec 120).answer
@@ -86,9 +86,9 @@ Te same zapytania są w `src/LegAid.Api/LegAid.Api.http`, można je też puszcza
 ## Kod do pokazania
 
 - `Program.cs`: rejestracja `IChatClient` (OpenAI) i bazy wiedzy, klucz spoza repo
-- `Agents/LegalAgent.cs`: szuka przepisów, dokleja je do pytania, woła model
-- `Agents/KnowledgeBase.cs`: wyszukiwanie przepisów (BM25, działa lokalnie)
-- `Knowledge/przepisy.txt`: baza, 19 artykułów wyciętych z KC, KP i dwóch ustaw
+- `Agents/LegalAgent.cs`: dokleja bazę przepisów do rozmowy, woła model
+- `Agents/KnowledgeBase.cs`: wczytuje przepisy i dzieli je na artykuły
+- `Knowledge/przepisy.txt`: baza, 20 artykułów wyciętych z KC, KP i dwóch ustaw
 - `Agents/LegalAgentPrompts.cs`: prompt
 
 ## Jak coś nie działa

@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LegAid</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext x='16' y='25' font-size='28' font-family='Georgia,serif' text-anchor='middle' fill='%237d2020'%3E§%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+  :root {
+    --paper: #f5f0e6;
+    --sheet: #fbf8f1;
+    --ink: #221d17;
+    --muted: #6f665a;
+    --rule: #dcd3c3;
+    --seal: #7d2020;
+    --seal-soft: #f0e0d8;
+    --serif: "Newsreader", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #191613;
+      --sheet: #221e1a;
+      --ink: #ece5d8;
+      --muted: #a2978a;
+      --rule: #3a342c;
+      --seal: #e0a08f;
+      --seal-soft: #3b2622;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    display: flex;
+    flex-direction: column;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 18px;
+    line-height: 1.6;
+  }
+
+  .column { width: 100%; max-width: 720px; margin: 0 auto; padding: 0 20px; }
+
+  header { border-bottom: 1px solid var(--rule); }
+  header .column { display: flex; align-items: baseline; gap: 12px; padding-top: 16px; padding-bottom: 12px; }
+  .mark { color: var(--seal); font-size: 26px; line-height: 1; }
+  .name { font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+  .tagline { margin-left: auto; color: var(--muted); font: 400 13px/1.4 var(--sans); }
+
+  main { flex: 1; overflow-y: auto; scroll-behavior: smooth; }
+  #log { padding-top: 28px; padding-bottom: 28px; }
+
+  .empty { padding: 12vh 0 0; animation: rise .5s ease both; }
+  .empty .big { display: block; color: var(--seal); font-size: 72px; line-height: 1; opacity: .85; }
+  .empty h1 { margin: 14px 0 8px; font-size: 34px; font-weight: 500; line-height: 1.2; letter-spacing: -0.015em; }
+  .empty p { margin: 0; max-width: 34em; color: var(--muted); }
+
+  .msg { animation: rise .25s ease both; scroll-margin-top: 16px; }
+  .msg + .msg { margin-top: 26px; }
+
+  .user { display: flex; justify-content: flex-end; }
+  .user div {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 3px;
+    background: var(--ink);
+    color: var(--paper);
+    font: 400 15px/1.55 var(--sans);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .bot {
+    padding: 2px 0 2px 18px;
+    border-left: 2px solid var(--seal);
+    overflow-wrap: anywhere;
+  }
+  .bot > :first-child { margin-top: 0; }
+  .bot > :last-child { margin-bottom: 0; }
+  .bot p { margin: 0 0 .8em; }
+  .bot h2, .bot h3, .bot h4 { margin: 1.1em 0 .35em; font-size: 19px; font-weight: 600; line-height: 1.3; }
+  .bot ul, .bot ol { margin: 0 0 .8em; padding-left: 1.3em; }
+  .bot li { margin-bottom: .35em; }
+  .bot blockquote { margin: 0 0 .8em; padding-left: 14px; border-left: 1px solid var(--rule); color: var(--muted); font-style: italic; }
+  .bot hr { margin: 1.1em 0; border: 0; border-top: 1px solid var(--rule); }
+
+  .cite {
+    padding: 1px 4px;
+    border-radius: 2px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    background: var(--seal-soft);
+    color: var(--seal);
+    font: 500 12.5px/1.65 var(--sans);
+  }
+
+  .wait { display: flex; align-items: center; gap: 10px; color: var(--muted); font: 400 14px/1.5 var(--sans); }
+  .wait i { width: 7px; height: 7px; border-radius: 50%; background: var(--seal); animation: pulse 1.2s ease-in-out infinite; }
+  .wait time { font-variant-numeric: tabular-nums; }
+
+  .error { color: var(--seal); font: 400 14px/1.5 var(--sans); }
+
+  footer { border-top: 1px solid var(--rule); background: var(--sheet); }
+  footer .column { padding-top: 12px; padding-bottom: 10px; }
+  form { display: flex; align-items: flex-end; gap: 10px; }
+  textarea {
+    flex: 1;
+    min-width: 0;
+    max-height: 200px;
+    padding: 9px 12px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 15px/1.5 var(--sans);
+    resize: none;
+  }
+  textarea::placeholder { color: var(--muted); }
+  textarea:focus-visible, button:focus-visible { outline: 2px solid var(--seal); outline-offset: 1px; }
+  button {
+    padding: 9px 16px;
+    border: 0;
+    border-radius: 3px;
+    background: var(--seal);
+    color: var(--sheet);
+    font: 500 15px/1.5 var(--sans);
+    cursor: pointer;
+    transition: opacity .15s;
+  }
+  button:hover { opacity: .88; }
+  button:disabled { opacity: .4; cursor: default; }
+  .note { margin: 8px 0 0; color: var(--muted); font: 400 12px/1.4 var(--sans); }
+
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .examples button {
+    flex: none;
+    padding: 3px 10px;
+    border: 1px solid var(--rule);
+    background: transparent;
+    color: var(--muted);
+    font: 400 13px/1.4 var(--sans);
+  }
+  .examples button:hover { border-color: var(--seal); color: var(--seal); opacity: 1; }
+
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  @keyframes pulse { 50% { opacity: .25; transform: scale(.7); } }
+
+  @media (max-width: 520px) {
+    body { font-size: 17px; }
+    .column { padding-left: 16px; padding-right: 16px; }
+    .tagline { display: none; }
+    .empty { padding-top: 6vh; }
+    .empty h1 { font-size: 28px; }
+    .user div { max-width: 92%; }
+    .examples { flex-wrap: nowrap; overflow-x: auto; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="column">
+      <span class="mark" aria-hidden="true">§</span>
+      <span class="name">LegAid</span>
+      <span class="tagline">Analiza umów i pism według prawa polskiego</span>
+    </div>
+  </header>
+
+  <main id="scroller">
+    <div class="column" id="log" role="log" aria-live="polite">
+      <div class="empty" id="empty">
+        <span class="big" aria-hidden="true">§</span>
+        <h1>Co chcesz sprawdzić?</h1>
+        <p>Zadaj pytanie prawne albo wklej fragment umowy lub pisma, a wskażę ryzykowne zapisy i przepisy, które ich dotyczą.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="column">
+      <div class="examples" id="examples" role="group" aria-label="Przykładowe pytania"></div>
+      <form id="form">
+        <textarea id="input" rows="1" placeholder="Napisz pytanie albo wklej zapis z umowy…" aria-label="Twoja wiadomość" autofocus></textarea>
+        <button id="send" type="submit">Wyślij</button>
+      </form>
+      <p class="note">Odpowiedzi tworzy AI i mogą zawierać błędy. To nie jest porada prawna.</p>
+    </div>
+  </footer>
+
+<script>
+  const log = document.getElementById("log");
+  const scroller = document.getElementById("scroller");
+  const form = document.getElementById("form");
+  const input = document.getElementById("input");
+  const send = document.getElementById("send");
+
+  // Pytania z pokazu (docs/DEMO.md): kliknięcie wpisuje tekst do pola, wysyła się go ręcznie.
+  const examples = [
+    ["Umowa najmu", "Mam podpisać umowę najmu mieszkania i niepokoją mnie te zapisy: § 5. Za każdy dzień spóźnienia z czynszem najemca płaci 1000 zł kary umownej. § 6. Wynajmujący może wypowiedzieć umowę w każdym czasie. § 7. Kaucja nie podlega zwrotowi. Podpisywać?"],
+    ["A co z § 7?", "a co z § 7?"],
+    ["Okres wypowiedzenia","Ile wynosi okres wypowiedzenia umowy o pracę po 4 latach zatrudnienia?"],
+    ["Urlop w pierwszej pracy", "Zaczynam pierwszą pracę i szef mówi, że w pierwszym roku urlop mi się nie należy. Czy to prawda?"],
+    ["Kaucja po wyprowadzce", "Wyprowadziłem się z wynajmowanego mieszkania dwa miesiące temu, a właściciel dalej nie oddał mi kaucji. Może ją tak po prostu zatrzymać?"],
+    ["Regulamin siłowni", "Zapisałem się na siłownię i w regulaminie jest: § 4. Klub może w każdym czasie zmienić cenę karnetu. § 7. Klubowicz nie może wypowiedzieć umowy przed upływem 24 miesięcy. § 9. Spory rozstrzyga sąd właściwy dla siedziby Klubu. Czy to w ogóle jest legalne?"],
+    ["Wezwanie do zapłaty", "Przyszedł do mnie list: Wzywamy do zapłaty 2 340 zł z faktury nr 14/2021 w terminie 7 dni, inaczej sprawa trafi do sądu. Nawet nie pamiętam, za co to było. Muszę płacić?"]
+  ];
+
+  // Pamięć rozmowy: wysyłana z każdym pytaniem, znika po odświeżeniu strony.
+  const conversation = [];
+  let busy = false;
+
+  const escapeHtml = text => text
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  // Tekst modelu jest najpierw escapowany, więc nie może wstrzyknąć HTML na stronę.
+  function inline(text) {
+    return escapeHtml(text)
+      .replace(/\[([^\[\]]*\bart\.[^\[\]]*)\]/g, (_, label) => `<span class="cite">${label.replace(/\*/g, "")}</span>`)
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/(^|[\s(])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
+  }
+
+  function renderMarkdown(source) {
+    const html = [];
+    let list = null;
+    let paragraph = [];
+
+    const closeList = () => { if (list) { html.push(`</${list}>`); list = null; } };
+    const closeParagraph = () => {
+      if (paragraph.length) { html.push(`<p>${paragraph.map(inline).join("<br>")}</p>`); paragraph = []; }
+    };
+
+    for (const raw of source.split(/\r?\n/)) {
+      const line = raw.trim();
+      const heading = line.match(/^(#{1,4})\s+(.*)$/);
+      const bullet = line.match(/^[-*•]\s+(.*)$/);
+      const numbered = line.match(/^\d+[.)]\s+(.*)$/);
+      const quote = line.match(/^>\s?(.*)$/);
+
+      if (!line) { closeParagraph(); continue; }
+      if (bullet || numbered) {
+        closeParagraph();
+        const type = bullet ? "ul" : "ol";
+        if (list !== type) { closeList(); html.push(`<${type}>`); list = type; }
+        html.push(`<li>${inline((bullet || numbered)[1])}</li>`);
+        continue;
+      }
+      if (heading || quote || /^(-{3,}|\*{3,})$/.test(line)) {
+        closeParagraph();
+        closeList();
+        if (heading) html.push(`<h3>${inline(heading[2])}</h3>`);
+        else if (quote) html.push(`<blockquote>${inline(quote[1])}</blockquote>`);
+        else html.push("<hr>");
+        continue;
+      }
+      closeList();
+      paragraph.push(line);
+    }
+    closeParagraph();
+    closeList();
+    return html.join("");
+  }
+
+  function add(className, build) {
+    document.getElementById("empty")?.remove();
+    const element = document.createElement("div");
+    element.className = `msg ${className}`;
+    build(element);
+    log.append(element);
+    scroller.scrollTop = scroller.scrollHeight;
+    return element;
+  }
+
+  function addUser(text) {
+    add("user", element => {
+      const bubble = document.createElement("div");
+      bubble.textContent = text;
+      element.append(bubble);
+    });
+  }
+
+  function addWaiting() {
+    const started = Date.now();
+    const element = add("wait", el => { el.innerHTML = "<i></i><span>Analizuję…</span><time>0 s</time>"; });
+    const timer = setInterval(() => {
+      element.querySelector("time").textContent = `${Math.floor((Date.now() - started) / 1000)} s`;
+    }, 1000);
+    return () => { clearInterval(timer); element.remove(); };
+  }
+
+  function resize() {
+    input.style.height = "auto";
+    input.style.height = `${Math.min(input.scrollHeight + 2, 200)}px`;
+  }
+
+  async function ask(message) {
+    const response = await fetch("/api/agent/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, history: conversation }),
+      signal: AbortSignal.timeout(120000)
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return (await response.json()).answer;
+  }
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    const message = input.value.trim();
+    if (!message || busy) return;
+
+    busy = true;
+    send.disabled = true;
+    input.value = "";
+    resize();
+    document.querySelector(".error")?.remove();
+    addUser(message);
+    const stopWaiting = addWaiting();
+
+    try {
+      const answer = await ask(message);
+      stopWaiting();
+      conversation.push({ role: "user", text: message }, { role: "assistant", text: answer });
+      // Długą odpowiedź czyta się od góry, więc przewijamy do jej początku.
+      add("bot", element => { element.innerHTML = renderMarkdown(answer); }).scrollIntoView({ block: "start" });
+    } catch (error) {
+      stopWaiting();
+      log.lastElementChild?.remove();
+      input.value = message;
+      resize();
+      add("error", element => {
+        element.textContent = error.name === "TimeoutError"
+          ? "Odpowiedź trwa zbyt długo. Spróbuj ponownie."
+          : "Nie udało się uzyskać odpowiedzi. Szczegóły są w konsoli serwera.";
+      });
+    } finally {
+      busy = false;
+      send.disabled = false;
+      input.focus();
+    }
+  });
+
+  for (const [label, text] of examples) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.addEventListener("click", () => {
+      input.value = text;
+      resize();
+      input.focus();
+    });
+    document.getElementById("examples").append(button);
+  }
+
+  input.addEventListener("input", resize);
+  input.addEventListener("keydown", event => {
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      form.requestSubmit();
+    }
+  });
+</script>
+</body>
+</html>

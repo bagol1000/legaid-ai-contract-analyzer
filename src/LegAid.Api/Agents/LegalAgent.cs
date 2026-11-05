@@ -10,23 +10,26 @@ public sealed class LegalAgent(
     IOptions<KnowledgeOptions> knowledgeOptions,
     ILogger<LegalAgent> logger) : ILegalAgent
 {
-    public async Task<LegalAgentAnswer> AskAsync(string message, CancellationToken cancellationToken = default)
+    // Ostatnie wiadomości rozmowy, które dostaje model; starsze pomijamy, żeby nie rósł koszt.
+    private const int MaxHistoryTurns = 20;
+
+    public async Task<LegalAgentAnswer> AskAsync(
+        string message,
+        IReadOnlyList<ChatTurn>? history = null,
+        CancellationToken cancellationToken = default)
     {
+        var turns = (history ?? []).TakeLast(MaxHistoryTurns).ToList();
+
         List<ChatMessage> messages = [new(ChatRole.System, LegalAgentPrompts.System)];
 
+        // Baza idzie przed historią, żeby początek zapytania był stały i mógł trafić w cache promptu.
         if (knowledgeOptions.Value.Enabled)
         {
-            var fragments = knowledgeBase.Search(message, max: 4);
-
-            logger.LogInformation("Baza wiedzy: znalezione przepisy ({Count}): {Sources}",
-                fragments.Count, string.Join(", ", fragments.Select(f => f.Source)));
-
-            if (fragments.Count > 0)
-            {
-                messages.Add(new(ChatRole.System, LegalAgentPrompts.KnowledgeContext(fragments)));
-            }
+            messages.Add(new(ChatRole.System, LegalAgentPrompts.KnowledgeContext(knowledgeBase.Fragments)));
         }
 
+        messages.AddRange(turns.Select(t =>
+            new ChatMessage(t.Role == "assistant" ? ChatRole.Assistant : ChatRole.User, t.Text)));
         messages.Add(new(ChatRole.User, message));
 
         var options = new ChatOptions();
