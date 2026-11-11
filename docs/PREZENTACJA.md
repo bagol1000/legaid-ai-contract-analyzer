@@ -1,4 +1,4 @@
-# LegAid
+# LegAId
 
 Asystent AI do analizy umów i pism prawnych według prawa polskiego.
 Tworzenie agentów AI w .NET, PW. Adam Bagiński, Krzysztof Dąbrowski, Adam Drogowski.
@@ -9,7 +9,7 @@ Notatki do pokazu, razem około 9 minut. Komendy są w `DEMO.md`.
 
 Większość ludzi podpisuje umowę najmu albo regulamin siłowni bez czytania drobnego druku, a o prawnika nikt nie pyta. To samo z wezwaniem do zapłaty: list przychodzi, jest strach, a nie wiadomo, czy dług w ogóle jest jeszcze wymagalny.
 
-LegAid dostaje pytanie albo tekst umowy czy pisma i odpowiada zwykłym językiem, z podaniem przepisu. Przy umowie mówi, które zapisy są problemem i jak je poprawić.
+LegAId dostaje pytanie albo tekst umowy czy pisma i odpowiada zwykłym językiem, z podaniem przepisu. Przy umowie mówi, które zapisy są problemem i jak je poprawić.
 
 ## Działający agent (3-4 min)
 
