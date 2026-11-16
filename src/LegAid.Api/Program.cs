@@ -4,6 +4,7 @@ using LegAid.Api.Infrastructure.Anonymization;
 using LegAid.Api.Infrastructure.Documents;
 using LegAid.Api.Infrastructure.Knowledge;
 using LegAid.Api.Logic;
+using LegAid.Api.Logic.ContractAnalysis;
 using LegAid.Api.Presentation.Endpoints;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
@@ -52,6 +53,10 @@ builder.Services.AddSingleton<IDocumentTextExtractor, DocumentTextExtractor>();
 builder.Services.AddSingleton<AgentMessages>();
 
 builder.Services.AddScoped<ILegalAgent, LegalAgent>();
+builder.Services.AddScoped<ContractAnalystAgent>();
+builder.Services.AddScoped<ClauseReviewerAgent>();
+builder.Services.AddScoped<ReportVerifierAgent>();
+builder.Services.AddScoped<ContractAnalyzer>();
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
@@ -74,5 +79,6 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 
 app.MapAgentEndpoints();
+app.MapContractEndpoints();
 
 app.Run();

@@ -17,6 +17,12 @@
     --rule: #dcd3c3;
     --seal: #7d2020;
     --seal-soft: #f0e0d8;
+    --high: #a3261b;
+    --high-soft: #f5dcd4;
+    --medium: #855600;
+    --medium-soft: #f3e4c0;
+    --low: #35663f;
+    --low-soft: #dce9d6;
     --serif: "Newsreader", Georgia, "Times New Roman", serif;
     --sans: "IBM Plex Sans", "Segoe UI", sans-serif;
   }
@@ -29,6 +35,12 @@
       --rule: #3a342c;
       --seal: #e0a08f;
       --seal-soft: #3b2622;
+      --high: #f0a193;
+      --high-soft: #45261f;
+      --medium: #e2bf72;
+      --medium-soft: #3d311a;
+      --low: #9cc8a4;
+      --low-soft: #213325;
     }
   }
 
@@ -120,7 +132,7 @@
     font: 400 15px/1.5 var(--sans);
     resize: none;
   }
-  textarea::placeholder { color: var(--muted); }
+  textarea::placeholder { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   textarea:focus-visible, button:focus-visible { outline: 2px solid var(--seal); outline-offset: 1px; }
   button {
     padding: 9px 16px;
@@ -147,6 +159,76 @@
   }
   .examples button:hover { border-color: var(--seal); color: var(--seal); opacity: 1; }
 
+  .attach {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 41px;
+    padding: 0;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--muted);
+  }
+  .attach:hover { border-color: var(--seal); color: var(--seal); opacity: 1; }
+  .attach svg, .user .file svg { width: 18px; height: 18px; }
+
+  .user .file { display: flex; align-items: center; gap: 8px; }
+
+  /* Raport z analizy umowy. Kolor poziomu ryzyka idzie przez --level, ustawiane klasą level-*. */
+  .level-high { --level: var(--high); --level-soft: var(--high-soft); }
+  .level-medium { --level: var(--medium); --level-soft: var(--medium-soft); }
+  .level-low { --level: var(--low); --level-soft: var(--low-soft); }
+
+  .kicker, .report .label {
+    display: block;
+    color: var(--muted);
+    font: 500 11.5px/1.4 var(--sans);
+    letter-spacing: .07em;
+    text-transform: uppercase;
+  }
+  .kicker { color: var(--seal); }
+  .bot .report-title { margin: 3px 0 .45em; font-size: 23px; font-weight: 500; line-height: 1.25; }
+  .privacy {
+    margin: 0 0 14px;
+    padding: 8px 12px;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    background: var(--sheet);
+    color: var(--muted);
+    font: 400 13.5px/1.5 var(--sans);
+  }
+  .tally { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+  .pill {
+    padding: 1px 9px;
+    border-radius: 999px;
+    background: var(--level-soft);
+    color: var(--level);
+    font: 500 12.5px/1.65 var(--sans);
+    white-space: nowrap;
+  }
+  .risk {
+    margin: 0 0 12px;
+    padding: 12px 16px 14px;
+    border: 1px solid var(--rule);
+    border-left: 3px solid var(--level);
+    border-radius: 3px;
+    background: var(--sheet);
+  }
+  .risk-top { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+  .clause { font-size: 19px; font-weight: 600; }
+  .bot .risk p { margin: 0 0 .75em; }
+  .basis { margin: 0 0 10px; line-height: 2; }
+  .basis .cite { margin-right: 4px; }
+  .bot .fix p {
+    margin: 2px 0 0;
+    padding: 8px 12px;
+    border-left: 2px solid var(--level);
+    background: var(--paper);
+    font-style: italic;
+  }
+  .disclaimer { color: var(--muted); font: 400 12.5px/1.5 var(--sans); }
+
   @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
   @keyframes pulse { 50% { opacity: .25; transform: scale(.7); } }
 
@@ -158,6 +240,9 @@
     .empty h1 { font-size: 28px; }
     .user div { max-width: 92%; }
     .examples { flex-wrap: nowrap; overflow-x: auto; }
+    .bot { padding-left: 14px; }
+    .risk { padding: 10px 12px 12px; }
+    .risk-top { flex-wrap: wrap; }
   }
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -178,7 +263,7 @@
       <div class="empty" id="empty">
         <span class="big" aria-hidden="true">§</span>
         <h1>Co chcesz sprawdzić?</h1>
-        <p>Zadaj pytanie prawne albo wklej fragment umowy lub pisma, a wskażę ryzykowne zapisy i przepisy, które ich dotyczą.</p>
+        <p>Zadaj pytanie prawne, wklej fragment umowy albo wgraj całą umowę w PDF lub DOCX. Wskażę ryzykowne zapisy i przepisy, które ich dotyczą, a dane osobowe usunę przed analizą.</p>
       </div>
     </div>
   </main>
@@ -187,6 +272,10 @@
     <div class="column">
       <div class="examples" id="examples" role="group" aria-label="Przykładowe pytania"></div>
       <form id="form">
+        <input id="file" type="file" accept=".pdf,.docx" hidden>
+        <button id="attach" class="attach" type="button" aria-label="Wgraj umowę (PDF lub DOCX)" title="Wgraj umowę (PDF lub DOCX)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5l-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/></svg>
+        </button>
         <textarea id="input" rows="1" placeholder="Napisz pytanie albo wklej zapis z umowy…" aria-label="Twoja wiadomość" autofocus></textarea>
         <button id="send" type="submit">Wyślij</button>
       </form>
@@ -200,6 +289,8 @@
   const form = document.getElementById("form");
   const input = document.getElementById("input");
   const send = document.getElementById("send");
+  const attach = document.getElementById("attach");
+  const fileInput = document.getElementById("file");
 
   // Pytania z pokazu (docs/DEMO.md): kliknięcie wpisuje tekst do pola, wysyła się go ręcznie.
   const examples = [
@@ -278,21 +369,40 @@
     return element;
   }
 
-  function addUser(text) {
+  const fileIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21h11a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h5"/></svg>';
+
+  function addUser(text, isFile = false) {
     add("user", element => {
       const bubble = document.createElement("div");
-      bubble.textContent = text;
+      if (isFile) {
+        bubble.className = "file";
+        bubble.innerHTML = fileIcon;
+      }
+      bubble.append(text);
       element.append(bubble);
     });
   }
 
-  function addWaiting() {
+  // Wskaźnik oczekiwania z licznikiem sekund; update zmienia opis, stop usuwa wskaźnik.
+  function addWaiting(label) {
     const started = Date.now();
-    const element = add("wait", el => { el.innerHTML = "<i></i><span>Analizuję…</span><time>0 s</time>"; });
+    const element = add("wait", el => { el.innerHTML = "<i></i><span></span><time>0 s</time>"; });
+    const update = text => { element.querySelector("span").textContent = text; };
     const timer = setInterval(() => {
       element.querySelector("time").textContent = `${Math.floor((Date.now() - started) / 1000)} s`;
     }, 1000);
-    return () => { clearInterval(timer); element.remove(); };
+    update(label);
+    return { update, stop: () => { clearInterval(timer); element.remove(); } };
+  }
+
+  function showError(message) {
+    add("error", element => { element.textContent = message; });
+  }
+
+  function setBusy(value) {
+    busy = value;
+    send.disabled = value;
+    attach.disabled = value;
   }
 
   function resize() {
@@ -300,8 +410,40 @@
     input.style.height = `${Math.min(input.scrollHeight + 2, 200)}px`;
   }
 
-  // Odpowiedź przychodzi jako Server-Sent Events: "delta" z kawałkiem tekstu (JSON), na końcu "done" albo "error".
-  // EventSource obsługuje tylko GET, więc strumień czytamy z fetch. onText dostaje cały dotychczasowy tekst.
+  // Błąd z komunikatem dla użytkownika (np. z walidacji albo zdarzenia "error"), pokazywany zamiast ogólnego.
+  const visibleError = message => Object.assign(new Error(message), { visible: true });
+
+  // Czyta Server-Sent Events z odpowiedzi fetch (EventSource obsługuje tylko GET). Dane każdego zdarzenia to JSON.
+  // onEvent(typ, dane) zwraca true, gdy to ostatnie zdarzenie; strumień urwany wcześniej to błąd.
+  async function readEvents(response, onEvent) {
+    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+    let buffer = "";
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) throw new Error("Połączenie zostało przerwane przed końcem odpowiedzi.");
+        buffer += value.replace(/\r/g, "");
+
+        let end;
+        while ((end = buffer.indexOf("\n\n")) >= 0) {
+          const block = buffer.slice(0, end);
+          buffer = buffer.slice(end + 2);
+
+          let type = "message";
+          let data = "";
+          for (const line of block.split("\n")) {
+            if (line.startsWith("event:")) type = line.slice(6).trim();
+            else if (line.startsWith("data:")) data += line.slice(5).replace(/^ /, "");
+          }
+          if (onEvent(type, JSON.parse(data))) return;
+        }
+      }
+    } finally {
+      reader.cancel().catch(() => {});
+    }
+  }
+
+  // Czat: "delta" z kawałkiem tekstu, na końcu "done" albo "error". onText dostaje cały dotychczasowy tekst.
   async function ask(message, onText) {
     const response = await fetch("/api/agent/ask/stream", {
       method: "POST",
@@ -311,39 +453,13 @@
     });
     if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`);
 
-    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
-    let buffer = "";
     let answer = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += value.replace(/\r/g, "");
-
-      let end;
-      while ((end = buffer.indexOf("\n\n")) >= 0) {
-        const block = buffer.slice(0, end);
-        buffer = buffer.slice(end + 2);
-
-        let type = "message";
-        let data = "";
-        for (const line of block.split("\n")) {
-          if (line.startsWith("event:")) type = line.slice(6).trim();
-          else if (line.startsWith("data:")) data += line.slice(5).replace(/^ /, "");
-        }
-
-        if (type === "delta") {
-          answer += JSON.parse(data);
-          onText(answer);
-        } else if (type === "done") {
-          return answer;
-        } else if (type === "error") {
-          throw new Error(JSON.parse(data));
-        }
-      }
-    }
-
-    throw new Error("Połączenie zostało przerwane przed końcem odpowiedzi.");
+    await readEvents(response, (type, data) => {
+      if (type === "delta") onText(answer += data);
+      else if (type === "error") throw new Error(data);
+      return type === "done";
+    });
+    return answer;
   }
 
   form.addEventListener("submit", async event => {
@@ -351,13 +467,12 @@
     const message = input.value.trim();
     if (!message || busy) return;
 
-    busy = true;
-    send.disabled = true;
+    setBusy(true);
     input.value = "";
     resize();
     document.querySelector(".error")?.remove();
     addUser(message);
-    const stopWaiting = addWaiting();
+    const waiting = addWaiting("Analizuję…");
     let bot = null;
     let frame = 0;
 
@@ -365,7 +480,7 @@
     // Długą odpowiedź czyta się od góry, więc przewijamy tylko raz, do jej początku.
     const showAnswer = text => {
       if (!bot) {
-        stopWaiting();
+        waiting.stop();
         bot = add("bot", () => {});
         bot.scrollIntoView({ block: "start" });
       }
@@ -382,20 +497,155 @@
       conversation.push({ role: "user", text: message }, { role: "assistant", text: answer });
     } catch (error) {
       cancelAnimationFrame(frame);
-      if (bot) bot.remove(); else stopWaiting();
+      if (bot) bot.remove(); else waiting.stop();
       log.lastElementChild?.remove();
       input.value = message;
       resize();
-      add("error", element => {
-        element.textContent = error.name === "TimeoutError"
-          ? "Odpowiedź trwa zbyt długo. Spróbuj ponownie."
-          : "Nie udało się uzyskać odpowiedzi. Szczegóły są w konsoli serwera.";
-      });
+      showError(error.name === "TimeoutError"
+        ? "Odpowiedź trwa zbyt długo. Spróbuj ponownie."
+        : "Nie udało się uzyskać odpowiedzi. Szczegóły są w konsoli serwera.");
     } finally {
-      busy = false;
-      send.disabled = false;
+      setBusy(false);
       input.focus();
     }
+  });
+
+  // ---- Analiza wgranej umowy ----
+
+  const levels = {
+    high: { order: 0, label: "Wysokie ryzyko", short: "Wysokie" },
+    medium: { order: 1, label: "Średnie ryzyko", short: "Średnie" },
+    low: { order: 2, label: "Niskie ryzyko", short: "Niskie" }
+  };
+
+  // Formy po liczebnikach: 1 / 2–4 (bez 12–14) / 5 i więcej.
+  const personalData = {
+    person: ["osobę", "osoby", "osób"],
+    pesel: ["numer PESEL", "numery PESEL", "numerów PESEL"],
+    nip: ["numer NIP", "numery NIP", "numerów NIP"],
+    regon: ["numer REGON", "numery REGON", "numerów REGON"],
+    idCard: ["numer dowodu osobistego", "numery dowodów osobistych", "numerów dowodów osobistych"],
+    bankAccount: ["numer rachunku bankowego", "numery rachunków bankowych", "numerów rachunków bankowych"],
+    email: ["adres e-mail", "adresy e-mail", "adresów e-mail"],
+    phone: ["numer telefonu", "numery telefonów", "numerów telefonów"],
+    address: ["adres", "adresy", "adresów"],
+    birthDate: ["datę urodzenia", "daty urodzenia", "dat urodzenia"]
+  };
+
+  function plural(count, [one, few, many]) {
+    const isFew = count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14);
+    return `${count} ${count === 1 ? one : isFew ? few : many}`;
+  }
+
+  const progressText = {
+    anonymizing: () => "Usuwam dane osobowe…",
+    analyzing: () => "Analizuję umowę…",
+    reviewing: p => `Oceniam zapisy (${p.completed}/${p.total})…`,
+    verifying: () => "Sprawdzam wyniki…"
+  };
+
+  // Tekst z modelu w wielu wierszach: każdy wiersz przez inline (escapowanie), połączone <br>.
+  const lines = text => text.split(/\r?\n/).map(inline).join("<br>");
+
+  const sortedRisks = report => [...report.risks].sort((a, b) => levels[a.level].order - levels[b.level].order);
+
+  function renderReport(report) {
+    const removed = Object.entries(report.removedPersonalData)
+      .filter(([kind, count]) => count > 0 && personalData[kind])
+      .map(([kind, count]) => plural(count, personalData[kind]));
+
+    const tally = Object.keys(levels)
+      .map(level => [level, report.risks.filter(r => r.level === level).length])
+      .filter(([, count]) => count > 0)
+      .map(([level, count]) => `<span class="pill level-${level}">${levels[level].short}: ${count}</span>`)
+      .join("");
+
+    const risks = sortedRisks(report).map(risk => `
+      <article class="risk level-${risk.level}">
+        <div class="risk-top">
+          <span class="clause">${escapeHtml(risk.clause)}</span>
+          <span class="pill">${levels[risk.level].label}</span>
+        </div>
+        <p>${lines(risk.problem)}</p>
+        ${risk.legalBasis.length ? `<div class="basis"><span class="label">Podstawa prawna</span>${risk.legalBasis
+          .map(basis => `<span class="cite">${escapeHtml(basis)}</span>`).join("")}</div>` : ""}
+        <div class="fix"><span class="label">Proponowane brzmienie</span><p>${lines(risk.suggestion)}</p></div>
+      </article>`).join("");
+
+    const missing = report.missingClauses.length
+      ? `<h3>Brakujące postanowienia</h3><ul>${report.missingClauses.map(c => `<li>${inline(c)}</li>`).join("")}</ul>`
+      : "";
+
+    return `
+      <span class="kicker">Raport z analizy umowy</span>
+      <h2 class="report-title">${escapeHtml(report.contractType)}</h2>
+      <p>${lines(report.summary)}</p>
+      <p class="privacy">${removed.length ? `Przed analizą ukryto: ${removed.join(", ")}.` : "Nie znaleziono danych osobowych."}</p>
+      ${risks ? `<div class="tally">${tally}</div>${risks}` : "<p>Nie znalazłem ryzykownych zapisów.</p>"}
+      ${missing}
+      <p class="disclaimer">Raport nie stanowi porady prawnej.</p>`;
+  }
+
+  // Tekstowa wersja raportu do pamięci rozmowy, żeby działały dopytania typu „a co z § 7?”.
+  function reportToText(report) {
+    const risks = sortedRisks(report).map(r =>
+      `- ${r.clause} (${levels[r.level].label.toLowerCase()}): ${r.problem}` +
+      (r.legalBasis.length ? ` Podstawa prawna: ${r.legalBasis.map(b => `[${b}]`).join(", ")}.` : "") +
+      ` Proponowane brzmienie: ${r.suggestion}`);
+    return [
+      `Raport z analizy umowy: ${report.contractType}`,
+      report.summary,
+      risks.length ? `Ryzyka:\n${risks.join("\n")}` : "Nie znaleziono ryzykownych zapisów.",
+      report.missingClauses.length ? `Brakujące postanowienia:\n${report.missingClauses.map(c => `- ${c}`).join("\n")}` : ""
+    ].filter(Boolean).join("\n\n");
+  }
+
+  async function analyzeFile(file) {
+    setBusy(true);
+    document.querySelector(".error")?.remove();
+    addUser(file.name, true);
+    const waiting = addWaiting("Wysyłam plik…");
+
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const response = await fetch("/api/contract/analyze", { method: "POST", body, signal: AbortSignal.timeout(180000) });
+      if (response.status === 400) {
+        const problem = await response.json().catch(() => null);
+        throw visibleError(problem?.errors?.file?.[0] ?? "Nie udało się wczytać pliku.");
+      }
+      if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`);
+
+      let report = null;
+      await readEvents(response, (type, data) => {
+        if (type === "progress") waiting.update(progressText[data.stage]?.(data) ?? "Analizuję umowę…");
+        else if (type === "report") report = data;
+        else if (type === "error") throw visibleError(data);
+        return report !== null;
+      });
+
+      waiting.stop();
+      add("bot report", element => { element.innerHTML = renderReport(report); }).scrollIntoView({ block: "start" });
+      conversation.push(
+        { role: "user", text: `Umowa do analizy (dane osobowe zostały usunięte):\n\n${report.anonymizedText}` },
+        { role: "assistant", text: reportToText(report) });
+    } catch (error) {
+      waiting.stop();
+      log.lastElementChild?.remove();
+      showError(error.name === "TimeoutError" ? "Analiza trwa zbyt długo. Spróbuj ponownie."
+        : error.visible ? error.message
+        : "Nie udało się przeanalizować umowy. Szczegóły są w konsoli serwera.");
+    } finally {
+      setBusy(false);
+      input.focus();
+    }
+  }
+
+  attach.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", () => {
+    const [file] = fileInput.files;
+    fileInput.value = "";
+    if (file && !busy) analyzeFile(file);
   });
 
   for (const [label, text] of examples) {
