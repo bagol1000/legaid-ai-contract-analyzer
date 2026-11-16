@@ -1,6 +1,6 @@
 # Zmiany w wersji wczesnego demo
 
-Co było na początku, co zmieniliśmy i co warto jeszcze zrobić na obecnym etapie. Punkt wyjścia to commit `f74e2b1`, zmiany są w `06c2984`.
+Co było na początku, co zmieniliśmy i co warto jeszcze zrobić na obecnym etapie. Punkt wyjścia to commit `f74e2b1`, zmiany są w `06c2984` i `057455c`.
 
 ## Stan początkowy
 
@@ -24,7 +24,7 @@ Czat pokazuje czas oczekiwania, formatuje odpowiedzi i wyróżnia powołania na 
 - Historię trzyma przeglądarka i wysyła ją z każdym pytaniem, a serwer niczego nie zapisuje. Odświeżenie strony czyści rozmowę.
 - Model dostaje 20 ostatnich wiadomości.
 - Dozwolone role to tylko `user` i `assistant`, inne dają błąd 400.
-- Przepisy są szukane po bieżącym i poprzednim pytaniu, żeby działały nawiązania typu „a co z § 7?”.
+- Nawiązania typu „a co z § 7?” działają, bo model widzi wcześniejsze wiadomości, a cała baza przepisów idzie w każdym zapytaniu.
 
 ### Model
 
@@ -49,12 +49,37 @@ Przy 19 artykułach wyszukiwanie częściej szkodziło, niż pomagało, np. gubi
 
 Przy włączonej bazie model opiera się wyłącznie na niej, a gdy czegoś w niej nie ma, pisze „Nie mam informacji na ten temat.”. O samej bazie w odpowiedziach nie wspomina. Reguły są w `KnowledgeRules` w `LegalAgentPrompts.cs`. Przy `Knowledge:Enabled = false` nie obowiązują i agent odpowiada z wiedzy modelu.
 
+### Podział na warstwy
+
+Kod jest podzielony na foldery według warstw: `Model`, `Abstractions`, `Logic`, `Infrastructure` i `Presentation`. Opis jest w `ARCHITEKTURA.md`. Działanie aplikacji i format API się nie zmieniły. Oprócz przeniesienia plików:
+
+- `LegalAgent` zależy od interfejsu `IKnowledgeSource`, a nie od konkretnej klasy. Dawny `KnowledgeBase` to teraz `FileKnowledgeSource`.
+- Czytanie pliku (`FileKnowledgeSource`) jest oddzielone od parsowania formatu przepisów (`KnowledgeFileParser`).
+- API ma własne DTO (`ChatTurnDto`), a agent dostaje `ChatTurn` z modelu domeny z rolą jako enum. Wcześniej ta sama klasa służyła do obu celów.
+- `przepisy.txt` jest w `Infrastructure/Knowledge/`.
+
+### Streamowanie odpowiedzi
+
+Czat pokazuje odpowiedź na bieżąco, w miarę jak model ją generuje. Korzysta z nowego endpointu `POST /api/agent/ask/stream`, który przyjmuje to samo co `/ask` i wysyła tekst jako Server-Sent Events (ADR-0006). Endpoint `/ask` działa jak wcześniej.
+
+### Analiza wgranej umowy
+
+Spinacz w czacie wgrywa umowę w PDF albo DOCX (`POST /api/contract/analyze`). Tekst jest najpierw anonimizowany, potem analizuje go trzech agentów: analityk, recenzenci paragrafów i weryfikator (ADR-0008). Czat pokazuje postęp i raport: ryzyka z poziomem, podstawą prawną i proponowanym brzmieniem, brakujące postanowienia i listę ukrytych danych. Po raporcie można dopytywać w czacie. Przykładowa umowa z fikcyjnymi danymi jest w `samples/`.
+
+### Anonimizacja
+
+Przed wysłaniem do modelu usuwamy dane osobowe, w umowach i w wiadomościach z czatu: imiona i nazwiska, PESEL, NIP, REGON, dowód, numer konta, e-mail, telefon, adres i datę urodzenia (ADR-0007). Zastępują je znaczniki, np. [OSOBA_1].
+
+### Testy i ewaluacja
+
+`tests/LegAid.Api.Tests`: testy jednostkowe i całego API z udawanym modelem, bez sieci. `tests/LegAid.Eval`: pytania z demo i przykładowe umowy na prawdziwym modelu, sprawdza powołane przepisy i wycieki danych. Jak uruchomić, opisuje `DEMO.md`.
+
 ## Do zrobienia na teraz
 
 ### Dokumentacja
 
-- [ ] `DEMO.md`: dopisać uruchamianie czatu w przeglądarce.
-- [ ] `DEMO.md`: usunąć zapowiedź, że etykieta zawsze oznacza przepis z bazy (szczegóły niżej).
+- [x] `DEMO.md`: dopisać uruchamianie czatu w przeglądarce.
+- [x] `DEMO.md`: usunąć zapowiedź, że etykieta zawsze oznacza przepis z bazy (szczegóły niżej).
 - [x] `PREZENTACJA.md`: zmienić model, dodać historię do schematu i usunąć frontend z „Co dalej”.
 
 ### Baza wiedzy
@@ -68,25 +93,25 @@ Przy włączonej bazie model opiera się wyłącznie na niej, a gdy czegoś w ni
 
 - [ ] Przejść wszystkie pytania z demo w przeglądarce i zapisać dobre odpowiedzi na wypadek braku sieci.
 - [ ] Sprawdzić koszt `gpt-6-luna` na koncie OpenAI.
-- [ ] Sprawdzić wygląd czatu w trybie ciemnym, bo nie był oglądany.
+- [x] Sprawdzić wygląd czatu w trybie ciemnym.
 
 ## Znane ograniczenia
 
 Na tym etapie można je zostawić, ale warto o nich wiedzieć przy pokazie:
 
-- Ograniczenie do bazy wynika tylko z promptu, kod go nie wymusza. Etykiety warto sprawdzać w `Knowledge/przepisy.txt`.
+- Ograniczenie do bazy wynika tylko z promptu, kod go nie wymusza. Etykiety warto sprawdzać w `Infrastructure/Knowledge/przepisy.txt`.
 - Baza ma 20 artykułów, więc na wiele zwykłych pytań agent odpowie, że nie ma informacji.
 - Każde zapytanie niesie całą bazę, więc koszt wejścia rośnie razem z nią. To działa tylko przy małej bazie.
 - Model dostaje też przepisy niezwiązane z pytaniem i ma je pomijać zgodnie z promptem.
+- Anonimizacja regułami nie złapie nazwiska bez rozpoznanego imienia ani zwrotu „Pan/Pani”.
+- Skanów PDF (bez warstwy tekstu) nie da się analizować.
 - Jakość odpowiedzi nie była oceniona przez prawnika.
 
 ## Poza zakresem wczesnego demo
 
 Plany z `Wizja.md`, na razie niezrobione:
 
-- wgrywanie PDF i DOCX,
-- raport ryzyk w JSON,
-- kilku współpracujących agentów i narzędzia dla modelu,
+- narzędzia dla modelu (function calling),
 - generowanie poprawionej wersji umowy,
 - pełne teksty ustaw i wyszukiwanie przez embeddingi,
-- testy automatyczne.
+- sprawdzanie w kodzie, czy powołane przepisy są w bazie.

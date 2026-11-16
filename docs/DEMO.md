@@ -23,13 +23,15 @@ Dzień wcześniej puszczamy wszystkie zapytania z listy niżej i zapisujemy jedn
 
    Czekamy na `Now listening on: http://localhost:5080`. Wyżej powinno być `Baza wiedzy: wczytano 20 przepisów`.
 
-2. Okno 2: wklejamy zapytania po kolei.
+2. W przeglądarce otwieramy `http://localhost:5080`. Nad polem wpisywania są przyciski z pytaniami z listy niżej: kliknięcie wpisuje tekst, a wysyłamy go klawiszem Enter albo przyciskiem „Wyślij”. Czat pamięta rozmowę, więc po umowie najmu działa dopytanie „a co z § 7?” (też jest na przycisku). Odświeżenie strony zaczyna nową rozmowę.
 
-3. Po każdej odpowiedzi pokazujemy powołane przepisy, np. `[KP art. 153]`. Agent wysyła do modelu całą bazę, więc czy przepis z niej pochodzi, sprawdzamy w `Knowledge/przepisy.txt`.
+   Bez przeglądarki: w drugim oknie PowerShella wklejamy komendy z listy niżej. Każda z nich to osobne pytanie, bez pamięci rozmowy.
+
+3. Po każdej odpowiedzi pokazujemy powołane przepisy, np. `[KP art. 153]`. Agent wysyła do modelu całą bazę, więc czy przepis z niej pochodzi, sprawdzamy w `Infrastructure/Knowledge/przepisy.txt`.
 
 4. Na koniec pokazujemy kod (lista na dole).
 
-Odpowiedź przychodzi po kilkunastu sekundach.
+W czacie odpowiedź pojawia się na bieżąco, w miarę jak model ją pisze. Komendy z PowerShella zwracają ją w całości, po kilkunastu sekundach.
 
 ## Zapytania
 
@@ -75,7 +77,7 @@ Sama faktura z 2021 r. nie przesądza o przedawnieniu, bo termin zależy od rodz
 
 ### 6. Pusta wiadomość
 
-Błąd 400, zapytanie nawet nie trafia do modelu.
+Błąd 400, zapytanie nawet nie trafia do modelu. Tylko z PowerShella, bo czat w ogóle nie wysyła pustej wiadomości.
 
 ```powershell
 Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType "application/json" -Body '{"message":""}'
@@ -83,13 +85,40 @@ Invoke-RestMethod http://localhost:5080/api/agent/ask -Method Post -ContentType 
 
 Te same zapytania są w `src/LegAid.Api/LegAid.Api.http`, można je też puszczać z VS / Ridera.
 
+### 7. Analiza umowy z pliku
+
+W czacie klikamy spinacz i wybieramy `samples/umowa-najmu.pdf` (albo `.docx`). Czat pokazuje kolejne etapy, a po około minucie raport. Najpierw pokazujemy linię „Przed analizą ukryto…” i znaczniki [OSOBA_1] w streszczeniu: do modelu nie trafiły żadne dane osobowe. Potem ryzyka: kara umowna za czynsz (art. 483 KC), bezzwrotna kaucja (art. 6) i wypowiedzenie w każdym czasie (art. 11 ustawy o lokatorach). Na koniec dopytujemy „a co z § 8?”.
+
+## Testy i ewaluacja
+
+Testy jednostkowe i całego API z udawanym modelem, bez sieci i kosztów:
+
+```powershell
+dotnet test tests\LegAid.Api.Tests
+```
+
+Ewaluacja na prawdziwym modelu (kilka groszy, ok. 3 minuty), przy działającym serwerze w drugim oknie:
+
+```powershell
+dotnet run --project tests\LegAid.Eval
+```
+
+Wypisuje dla każdego pytania i umowy, które przepisy zostały powołane i czy w raporcie nie ma danych osobowych.
+
 ## Kod do pokazania
 
-- `Program.cs`: rejestracja `IChatClient` (OpenAI) i bazy wiedzy, klucz spoza repo
-- `Agents/LegalAgent.cs`: dokleja bazę przepisów do rozmowy, woła model
-- `Agents/KnowledgeBase.cs`: wczytuje przepisy i dzieli je na artykuły
-- `Knowledge/przepisy.txt`: baza, 20 artykułów wyciętych z KC, KP i dwóch ustaw
-- `Agents/LegalAgentPrompts.cs`: prompt
+Ścieżki względem `src/LegAid.Api`, po kolei według warstw (opis w `ARCHITEKTURA.md`):
+
+- `wwwroot/index.html`: czat, cały w jednym pliku; historię rozmowy trzyma przeglądarka
+- `Presentation/Endpoints/AgentEndpoints.cs`: endpoint i walidacja żądania
+- `Logic/ContractAnalysis/ContractAnalyzer.cs`: orkiestrator analizy umowy, a obok trzej agenci
+- `Infrastructure/Anonymization/RegexAnonymizer.cs`: usuwanie danych osobowych
+- `Logic/LegalAgent.cs`: dokleja bazę przepisów do rozmowy, woła model
+- `Logic/Prompts/LegalAgentPrompts.cs`: prompt
+- `Abstractions/IKnowledgeSource.cs`: interfejs źródła przepisów, z którego korzysta agent
+- `Infrastructure/Knowledge/FileKnowledgeSource.cs`: wczytuje przepisy z pliku i dzieli je na artykuły
+- `Infrastructure/Knowledge/przepisy.txt`: baza, 20 artykułów wyciętych z KC, KP i dwóch ustaw
+- `Program.cs`: skleja warstwy, rejestruje `IChatClient` (OpenAI) i bazę wiedzy, klucz spoza repo
 
 ## Jak coś nie działa
 

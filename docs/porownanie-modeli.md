@@ -23,8 +23,6 @@ Każdy model przeszedł przez naszą aplikację w tej samej konfiguracji: ten sa
 
 Ocenialiśmy trafność prawną, trzymanie się bazy i styl odpowiedzi. Do tego doszły czas i koszt. Koszt liczymy z tokenów zapisanych w logach i cennika dostawcy. Modele Claude (Haiku 5.5 i Sonnet 5.5) testowaliśmy osobnym skryptem przez oficjalne SDK Anthropic. Prompt i baza były identyczne jak w aplikacji, tylko zapytanie nie przechodziło przez nią. Każdy model miał jedno podejście, więc wyniki to dobra orientacja, nie twardy pomiar.
 
-Testy można powtórzyć skryptem [`scripts/compare-models.ps1`](../scripts/compare-models.ps1).
-
 ## Wyniki
 
 Tabela obejmuje tylko modele, które odpowiadały średnio w mniej niż 20 sekund. Oceny są w skali 1–5.

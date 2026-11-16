@@ -15,19 +15,22 @@ LegAId dostaje pytanie albo tekst umowy czy pisma i odpowiada zwykłym językiem
 
 Pokaz w czacie pod `http://localhost:5080`, w tej kolejności:
 
-1. Umowa najmu z trzema złymi zapisami (pytanie 2 z `DEMO.md`). Model wskazuje problemy i proponuje nowe brzmienie. Trwa to około 30 s, więc w tym czasie omawiamy schemat niżej.
+1. Umowa najmu z trzema złymi zapisami (pytanie 2 z `DEMO.md`). Model wskazuje problemy i proponuje nowe brzmienie. Odpowiedź pojawia się na bieżąco, ale cała trwa około 30 s, więc w tym czasie omawiamy schemat niżej.
 2. Dopytanie „a co z § 7?”. Samo pytanie nic nie mówi, a agent wie, że chodzi o kaucję z poprzedniej wiadomości, bo pamięta rozmowę.
 3. Pytanie spoza bazy: „Ile wynosi okres wypowiedzenia umowy o pracę po 4 latach zatrudnienia?”. Agent po kilku sekundach przyznaje, że nie ma informacji.
 
 ```
 POST /api/agent/ask  { "message": "...", "history": [...] }
-   -> AgentEndpoints   sprawdza, czy wiadomość nie jest pusta
-   -> LegalAgent       składa rozmowę dla modelu
-   -> KnowledgeBase    wszystkie przepisy z Knowledge/przepisy.txt
-   -> IChatClient      instrukcje + przepisy + historia + pytanie
-   -> OpenAI           gpt-6-luna
+   -> AgentEndpoints       (prezentacja)      sprawdza, czy wiadomość nie jest pusta
+   -> LegalAgent           (logika)           składa rozmowę dla modelu
+   -> IKnowledgeSource     (abstrakcja)       wszystkie przepisy...
+        FileKnowledgeSource (infrastruktura)  ...z pliku przepisy.txt
+   -> IChatClient          (abstrakcja)       instrukcje + przepisy + historia + pytanie
+   -> OpenAI               (infrastruktura)   gpt-6-luna
 <- { "answer": "...", "model": "..." }
 ```
+
+Kod jest podzielony na warstwy: model, abstrakcje, logika, infrastruktura i prezentacja (`docs/ARCHITEKTURA.md`). Logika zna tylko interfejsy, więc plik z przepisami można zamienić na bazę wektorową, a OpenAI na inny model, bez zmian w agencie.
 
 ASP.NET Core (.NET 10), Microsoft.Extensions.AI, OpenAI. Czat to jeden plik `wwwroot/index.html`. Historię trzyma przeglądarka, serwer niczego nie zapisuje.
 
@@ -50,7 +53,7 @@ Agent nie wie, z jakim modelem rozmawia, zna tylko `IChatClient`. Model zmienia 
 
 ## Instrukcje (2 min)
 
-W `Agents/LegalAgentPrompts.cs`.
+W `Logic/Prompts/LegalAgentPrompts.cs`.
 
 - Rola i dwa tryby: przy umowie szuka zapisów niezgodnych z prawem, ryzykownych i luk, a przy innym piśmie wyjaśnia, co znaczy, jakie są terminy i co można zrobić.
 - Opiera się tylko na przepisach z bazy, streszcza je własnymi słowami i podaje etykietę, np. `[KC art. 484]`.
