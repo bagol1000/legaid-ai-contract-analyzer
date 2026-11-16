@@ -1,7 +1,8 @@
-using LegAid.Api.Agents;
+using LegAid.Api.Abstractions;
+using LegAid.Api.Model;
 using Microsoft.AspNetCore.Http.HttpResults;
 
-namespace LegAid.Api.Endpoints;
+namespace LegAid.Api.Presentation.Endpoints;
 
 public static class AgentEndpoints
 {
@@ -38,16 +39,12 @@ public static class AgentEndpoints
             });
         }
 
-        var answer = await agent.AskAsync(request.Message, request.History, cancellationToken);
+        var history = request.History?
+            .Select(t => new ChatTurn(t.Role == "assistant" ? ChatTurnRole.Assistant : ChatTurnRole.User, t.Text))
+            .ToList();
+
+        var answer = await agent.AskAsync(request.Message, history, cancellationToken);
 
         return TypedResults.Ok(new AskResponse(answer.Text, answer.Model));
     }
 }
-
-/// <param name="Message">Pytanie prawne albo treść umowy lub pisma.</param>
-/// <param name="History">Wcześniejsze wiadomości rozmowy, od najstarszej. Opcjonalne.</param>
-public sealed record AskRequest(string? Message, List<ChatTurn>? History = null);
-
-/// <param name="Answer">Odpowiedź agenta.</param>
-/// <param name="Model">Model, który wygenerował odpowiedź.</param>
-public sealed record AskResponse(string Answer, string? Model);

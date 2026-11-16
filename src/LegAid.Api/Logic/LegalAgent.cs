@@ -1,12 +1,14 @@
-using LegAid.Api.Configuration;
+using LegAid.Api.Abstractions;
+using LegAid.Api.Logic.Prompts;
+using LegAid.Api.Model;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 
-namespace LegAid.Api.Agents;
+namespace LegAid.Api.Logic;
 
 public sealed class LegalAgent(
     IChatClient chatClient,
-    KnowledgeBase knowledgeBase,
+    IKnowledgeSource knowledgeSource,
     IOptions<KnowledgeOptions> knowledgeOptions,
     ILogger<LegalAgent> logger) : ILegalAgent
 {
@@ -25,11 +27,11 @@ public sealed class LegalAgent(
         // Baza idzie przed historią, żeby początek zapytania był stały i mógł trafić w cache promptu.
         if (knowledgeOptions.Value.Enabled)
         {
-            messages.Add(new(ChatRole.System, LegalAgentPrompts.KnowledgeContext(knowledgeBase.Fragments)));
+            messages.Add(new(ChatRole.System, LegalAgentPrompts.KnowledgeContext(knowledgeSource.GetAll())));
         }
 
         messages.AddRange(turns.Select(t =>
-            new ChatMessage(t.Role == "assistant" ? ChatRole.Assistant : ChatRole.User, t.Text)));
+            new ChatMessage(t.Role == ChatTurnRole.Assistant ? ChatRole.Assistant : ChatRole.User, t.Text)));
         messages.Add(new(ChatRole.User, message));
 
         var options = new ChatOptions();

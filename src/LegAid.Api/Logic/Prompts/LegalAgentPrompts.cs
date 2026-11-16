@@ -1,4 +1,6 @@
-namespace LegAid.Api.Agents;
+using LegAid.Api.Model;
+
+namespace LegAid.Api.Logic.Prompts;
 
 public static class LegalAgentPrompts
 {

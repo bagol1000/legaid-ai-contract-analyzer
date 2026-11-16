@@ -1,4 +1,4 @@
-namespace LegAid.Api.Configuration;
+namespace LegAid.Api.Logic;
 
 public sealed class KnowledgeOptions
 {
