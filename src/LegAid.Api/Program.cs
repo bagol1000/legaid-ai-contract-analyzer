@@ -1,5 +1,7 @@
 using LegAid.Api.Abstractions;
 using LegAid.Api.Infrastructure;
+using LegAid.Api.Infrastructure.Anonymization;
+using LegAid.Api.Infrastructure.Documents;
 using LegAid.Api.Infrastructure.Knowledge;
 using LegAid.Api.Logic;
 using LegAid.Api.Presentation.Endpoints;
@@ -44,6 +46,10 @@ builder.Services
 builder.Services.Configure<KnowledgeOptions>(builder.Configuration.GetSection(KnowledgeOptions.SectionName));
 builder.Services.AddSingleton<IKnowledgeSource>(
     new FileKnowledgeSource(Path.Combine(AppContext.BaseDirectory, "Infrastructure", "Knowledge", "przepisy.txt")));
+
+builder.Services.AddSingleton<IAnonymizer, RegexAnonymizer>();
+builder.Services.AddSingleton<IDocumentTextExtractor, DocumentTextExtractor>();
+builder.Services.AddSingleton<AgentMessages>();
 
 builder.Services.AddScoped<ILegalAgent, LegalAgent>();
 

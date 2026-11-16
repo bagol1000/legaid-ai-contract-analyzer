@@ -3,14 +3,13 @@ using LegAid.Api.Abstractions;
 using LegAid.Api.Logic.Prompts;
 using LegAid.Api.Model;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Options;
 
 namespace LegAid.Api.Logic;
 
 public sealed class LegalAgent(
     IChatClient chatClient,
-    IKnowledgeSource knowledgeSource,
-    IOptions<KnowledgeOptions> knowledgeOptions,
+    AgentMessages agentMessages,
+    IAnonymizer anonymizer,
     ILogger<LegalAgent> logger) : ILegalAgent
 {
     // Ostatnie wiadomości rozmowy, które dostaje model; starsze pomijamy, żeby nie rósł koszt.
@@ -50,17 +49,18 @@ public sealed class LegalAgent(
 
     private List<ChatMessage> BuildMessages(string message, IReadOnlyList<ChatTurn>? history)
     {
-        List<ChatMessage> messages = [new(ChatRole.System, LegalAgentPrompts.System)];
+        var turns = history ?? [];
 
-        // Baza idzie przed historią, żeby początek zapytania był stały i mógł trafić w cache promptu.
-        if (knowledgeOptions.Value.Enabled)
-        {
-            messages.Add(new(ChatRole.System, LegalAgentPrompts.KnowledgeContext(knowledgeSource.GetAll())));
-        }
+        // Anonimizujemy całą rozmowę naraz i przed przycięciem historii, żeby ta sama osoba
+        // miała ten sam znacznik we wszystkich wiadomościach i przy każdym pytaniu.
+        var texts = anonymizer.Anonymize([.. turns.Select(t => t.Text), message]).Texts;
 
-        messages.AddRange((history ?? []).TakeLast(MaxHistoryTurns).Select(t =>
-            new ChatMessage(t.Role == ChatTurnRole.Assistant ? ChatRole.Assistant : ChatRole.User, t.Text)));
-        messages.Add(new(ChatRole.User, message));
+        var messages = agentMessages.Start(LegalAgentPrompts.System);
+
+        messages.AddRange(turns
+            .Select((t, i) => new ChatMessage(t.Role == ChatTurnRole.Assistant ? ChatRole.Assistant : ChatRole.User, texts[i]))
+            .TakeLast(MaxHistoryTurns));
+        messages.Add(new(ChatRole.User, texts[^1]));
 
         return messages;
     }

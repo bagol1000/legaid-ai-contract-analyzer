@@ -5,6 +5,8 @@
 !/README.md
 !/docs/
 !/src/
+!/tests/
+!/samples/
 
 # Build
 bin/
