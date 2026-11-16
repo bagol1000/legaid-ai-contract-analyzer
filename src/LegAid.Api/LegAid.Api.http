@@ -40,6 +40,14 @@ Content-Type: application/json
   "message": "Przyszedł do mnie list: Wzywamy do zapłaty 2 340 zł z faktury nr 14/2021 w terminie 7 dni, inaczej sprawa trafi do sądu. Nawet nie pamiętam, za co to było. Muszę płacić?"
 }
 
+### Streamowanie: odpowiedź w kawałkach (Server-Sent Events), tak jak w czacie
+POST {{host}}/api/agent/ask/stream
+Content-Type: application/json
+
+{
+  "message": "Zaczynam pierwszą pracę i szef mówi, że w pierwszym roku urlop mi się nie należy. Czy to prawda?"
+}
+
 ### Pusta wiadomość -> 400
 POST {{host}}/api/agent/ask
 Content-Type: application/json

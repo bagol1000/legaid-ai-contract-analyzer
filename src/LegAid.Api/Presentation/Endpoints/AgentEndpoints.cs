@@ -14,6 +14,11 @@ public static class AgentEndpoints
             .WithName("AskLegalAgent")
             .WithSummary("Zadaj pytanie prawne albo wklej umowę lub pismo do analizy.");
 
+        group.MapPost("/ask/stream", AskStream)
+            .WithName("AskLegalAgentStream")
+            .WithSummary("Jak /ask, ale odpowiedź przychodzi na bieżąco jako Server-Sent Events: "
+                + "zdarzenia 'delta' z kolejnymi kawałkami tekstu, na końcu 'done' albo 'error'.");
+
         return app;
     }
 
@@ -21,6 +26,39 @@ public static class AgentEndpoints
         AskRequest request,
         ILegalAgent agent,
         CancellationToken cancellationToken)
+    {
+        if (Validate(request) is { } problem)
+        {
+            return problem;
+        }
+
+        var answer = await agent.AskAsync(request.Message!, ToHistory(request), cancellationToken);
+
+        return TypedResults.Ok(new AskResponse(answer.Text, answer.Model));
+    }
+
+    private static Results<ServerSentEventsResult<string>, ValidationProblem> AskStream(
+        AskRequest request,
+        ILegalAgent agent,
+        ILoggerFactory loggerFactory,
+        CancellationToken cancellationToken)
+    {
+        if (Validate(request) is { } problem)
+        {
+            return problem;
+        }
+
+        var events = ServerSentEventStream.Create(
+            agent.AskStreamingAsync(request.Message!, ToHistory(request), cancellationToken),
+            chunk => ServerSentEventStream.Event("delta", chunk),
+            ServerSentEventStream.Event("done", new { }),
+            loggerFactory.CreateLogger(typeof(AgentEndpoints)),
+            cancellationToken);
+
+        return TypedResults.ServerSentEvents(events);
+    }
+
+    private static ValidationProblem? Validate(AskRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Message))
         {
@@ -39,12 +77,11 @@ public static class AgentEndpoints
             });
         }
 
-        var history = request.History?
+        return null;
+    }
+
+    private static List<ChatTurn>? ToHistory(AskRequest request) =>
+        request.History?
             .Select(t => new ChatTurn(t.Role == "assistant" ? ChatTurnRole.Assistant : ChatTurnRole.User, t.Text))
             .ToList();
-
-        var answer = await agent.AskAsync(request.Message, history, cancellationToken);
-
-        return TypedResults.Ok(new AskResponse(answer.Text, answer.Model));
-    }
 }

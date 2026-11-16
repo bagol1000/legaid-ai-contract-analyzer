@@ -300,15 +300,50 @@
     input.style.height = `${Math.min(input.scrollHeight + 2, 200)}px`;
   }
 
-  async function ask(message) {
-    const response = await fetch("/api/agent/ask", {
+  // Odpowiedź przychodzi jako Server-Sent Events: "delta" z kawałkiem tekstu (JSON), na końcu "done" albo "error".
+  // EventSource obsługuje tylko GET, więc strumień czytamy z fetch. onText dostaje cały dotychczasowy tekst.
+  async function ask(message, onText) {
+    const response = await fetch("/api/agent/ask/stream", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message, history: conversation }),
       signal: AbortSignal.timeout(120000)
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return (await response.json()).answer;
+    if (!response.ok || !response.body) throw new Error(`HTTP ${response.status}`);
+
+    const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+    let buffer = "";
+    let answer = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += value.replace(/\r/g, "");
+
+      let end;
+      while ((end = buffer.indexOf("\n\n")) >= 0) {
+        const block = buffer.slice(0, end);
+        buffer = buffer.slice(end + 2);
+
+        let type = "message";
+        let data = "";
+        for (const line of block.split("\n")) {
+          if (line.startsWith("event:")) type = line.slice(6).trim();
+          else if (line.startsWith("data:")) data += line.slice(5).replace(/^ /, "");
+        }
+
+        if (type === "delta") {
+          answer += JSON.parse(data);
+          onText(answer);
+        } else if (type === "done") {
+          return answer;
+        } else if (type === "error") {
+          throw new Error(JSON.parse(data));
+        }
+      }
+    }
+
+    throw new Error("Połączenie zostało przerwane przed końcem odpowiedzi.");
   }
 
   form.addEventListener("submit", async event => {
@@ -323,15 +358,31 @@
     document.querySelector(".error")?.remove();
     addUser(message);
     const stopWaiting = addWaiting();
+    let bot = null;
+    let frame = 0;
+
+    // Wskaźnik oczekiwania znika przy pierwszym kawałku tekstu, a potem odpowiedź rośnie na bieżąco.
+    // Długą odpowiedź czyta się od góry, więc przewijamy tylko raz, do jej początku.
+    const showAnswer = text => {
+      if (!bot) {
+        stopWaiting();
+        bot = add("bot", () => {});
+        bot.scrollIntoView({ block: "start" });
+      }
+      bot.innerHTML = renderMarkdown(text);
+    };
 
     try {
-      const answer = await ask(message);
-      stopWaiting();
+      const answer = await ask(message, text => {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(() => showAnswer(text));
+      });
+      cancelAnimationFrame(frame);
+      showAnswer(answer);
       conversation.push({ role: "user", text: message }, { role: "assistant", text: answer });
-      // Długą odpowiedź czyta się od góry, więc przewijamy do jej początku.
-      add("bot", element => { element.innerHTML = renderMarkdown(answer); }).scrollIntoView({ block: "start" });
     } catch (error) {
-      stopWaiting();
+      cancelAnimationFrame(frame);
+      if (bot) bot.remove(); else stopWaiting();
       log.lastElementChild?.remove();
       input.value = message;
       resize();

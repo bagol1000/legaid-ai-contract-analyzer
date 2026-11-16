@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using LegAid.Api.Abstractions;
 using LegAid.Api.Logic.Prompts;
 using LegAid.Api.Model;
@@ -20,8 +21,35 @@ public sealed class LegalAgent(
         IReadOnlyList<ChatTurn>? history = null,
         CancellationToken cancellationToken = default)
     {
-        var turns = (history ?? []).TakeLast(MaxHistoryTurns).ToList();
+        var response = await chatClient.GetResponseAsync(BuildMessages(message, history), new ChatOptions(), cancellationToken);
 
+        LogUsage(response);
+
+        return new LegalAgentAnswer(response.Text, response.ModelId);
+    }
+
+    public async IAsyncEnumerable<string> AskStreamingAsync(
+        string message,
+        IReadOnlyList<ChatTurn>? history = null,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        List<ChatResponseUpdate> updates = [];
+
+        await foreach (var update in chatClient.GetStreamingResponseAsync(BuildMessages(message, history), new ChatOptions(), cancellationToken))
+        {
+            updates.Add(update);
+
+            if (!string.IsNullOrEmpty(update.Text))
+            {
+                yield return update.Text;
+            }
+        }
+
+        LogUsage(updates.ToChatResponse());
+    }
+
+    private List<ChatMessage> BuildMessages(string message, IReadOnlyList<ChatTurn>? history)
+    {
         List<ChatMessage> messages = [new(ChatRole.System, LegalAgentPrompts.System)];
 
         // Baza idzie przed historią, żeby początek zapytania był stały i mógł trafić w cache promptu.
@@ -30,20 +58,17 @@ public sealed class LegalAgent(
             messages.Add(new(ChatRole.System, LegalAgentPrompts.KnowledgeContext(knowledgeSource.GetAll())));
         }
 
-        messages.AddRange(turns.Select(t =>
+        messages.AddRange((history ?? []).TakeLast(MaxHistoryTurns).Select(t =>
             new ChatMessage(t.Role == ChatTurnRole.Assistant ? ChatRole.Assistant : ChatRole.User, t.Text)));
         messages.Add(new(ChatRole.User, message));
 
-        var options = new ChatOptions();
+        return messages;
+    }
 
-        var response = await chatClient.GetResponseAsync(messages, options, cancellationToken);
-
+    private void LogUsage(ChatResponse response) =>
         logger.LogInformation(
             "Model {Model}: {InputTokens} tokenów wejścia, {OutputTokens} tokenów wyjścia",
             response.ModelId,
             response.Usage?.InputTokenCount,
             response.Usage?.OutputTokenCount);
-
-        return new LegalAgentAnswer(response.Text, response.ModelId);
-    }
 }
