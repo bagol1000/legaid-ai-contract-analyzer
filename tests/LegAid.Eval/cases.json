@@ -1,0 +1,49 @@
+{
+  "chat": [
+    {
+      "name": "Urlop w pierwszej pracy",
+      "message": "Zaczynam pierwszą pracę i szef mówi, że w pierwszym roku urlop mi się nie należy. Czy to prawda?",
+      "expected": ["KP art. 153", "KP art. 154"]
+    },
+    {
+      "name": "Umowa najmu",
+      "message": "Mam podpisać umowę najmu mieszkania i niepokoją mnie te zapisy: § 5. Za każdy dzień spóźnienia z czynszem najemca płaci 1000 zł kary umownej. § 6. Wynajmujący może wypowiedzieć umowę w każdym czasie. § 7. Kaucja nie podlega zwrotowi. Podpisywać?",
+      "expected": ["KC art. 483", "Ustawa o ochronie praw lokatorów art. 6", "Ustawa o ochronie praw lokatorów art. 11"]
+    },
+    {
+      "name": "Kaucja po wyprowadzce",
+      "message": "Wyprowadziłem się z wynajmowanego mieszkania dwa miesiące temu, a właściciel dalej nie oddał mi kaucji. Może ją tak po prostu zatrzymać?",
+      "expected": ["Ustawa o ochronie praw lokatorów art. 6"]
+    },
+    {
+      "name": "Regulamin siłowni",
+      "message": "Zapisałem się na siłownię i w regulaminie jest: § 4. Klub może w każdym czasie zmienić cenę karnetu. § 7. Klubowicz nie może wypowiedzieć umowy przed upływem 24 miesięcy. § 9. Spory rozstrzyga sąd właściwy dla siedziby Klubu. Czy to w ogóle jest legalne?",
+      "expected": ["KC art. 385³"]
+    },
+    {
+      "name": "Wezwanie do zapłaty",
+      "message": "Przyszedł do mnie list: Wzywamy do zapłaty 2 340 zł z faktury nr 14/2021 w terminie 7 dni, inaczej sprawa trafi do sądu. Nawet nie pamiętam, za co to było. Muszę płacić?",
+      "expected": ["KC art. 117", "KC art. 118"]
+    },
+    {
+      "name": "Pytanie spoza bazy",
+      "message": "Jak napisać testament i czy mogę wydziedziczyć syna?",
+      "expected": [],
+      "phrase": "Nie mam informacji"
+    }
+  ],
+  "documents": [
+    {
+      "name": "Umowa najmu (DOCX)",
+      "file": "samples/umowa-najmu.docx",
+      "expected": ["KC art. 483", "Ustawa o ochronie praw lokatorów art. 6", "Ustawa o ochronie praw lokatorów art. 11"],
+      "mustNotContain": ["Wiśniewsk", "Zielińsk", "76031206830", "92051407424", "ABS012345", "Kwiatowa", "Słoneczn", "601 234 567", "501 987 654", "k.zielinska", "1090 1014"]
+    },
+    {
+      "name": "Umowa najmu (PDF)",
+      "file": "samples/umowa-najmu.pdf",
+      "expected": ["KC art. 483", "Ustawa o ochronie praw lokatorów art. 6", "Ustawa o ochronie praw lokatorów art. 11"],
+      "mustNotContain": ["Wiśniewsk", "Zielińsk", "76031206830", "92051407424", "ABS012345", "Kwiatowa", "Słoneczn", "601 234 567", "501 987 654", "k.zielinska", "1090 1014"]
+    }
+  ]
+}

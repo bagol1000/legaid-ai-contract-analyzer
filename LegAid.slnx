@@ -2,4 +2,8 @@
   <Folder Name="/src/">
     <Project Path="src/LegAid.Api/LegAid.Api.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/LegAid.Api.Tests/LegAid.Api.Tests.csproj" />
+    <Project Path="tests/LegAid.Eval/LegAid.Eval.csproj" />
+  </Folder>
 </Solution>
